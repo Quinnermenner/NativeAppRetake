@@ -1,0 +1,6 @@
+framework module Pods_Quintenvanderpost_pset6 {
+  umbrella header "Pods-Quintenvanderpost-pset6-umbrella.h"
+
+  export *
+  module * { export * }
+}
