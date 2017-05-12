@@ -18,8 +18,9 @@ struct Repo {
     let url: String
     let updateDate: String
     let description: String
+    let id: Int
     
-    init(name: String, description: String, owner: String, url: String, updateDate: String, key: String = "") {
+    init(name: String, description: String, owner: String, url: String, updateDate: String, key: String = "", id: Int) {
         self.name = name
         self.owner = owner
         self.url = url
@@ -27,6 +28,7 @@ struct Repo {
         self.ref = nil
         self.key = key
         self.description = description
+        self.id = id
     }
     
     init(snapshot: FIRDataSnapshot) {
@@ -37,6 +39,7 @@ struct Repo {
         updateDate = snapshotValue["updateDate"] as! String
         url = snapshotValue["url"] as! String
         description = snapshotValue["description"] as! String
+        id = snapshotValue["id"] as! Int
         ref = snapshot.ref
     }
     
@@ -47,7 +50,8 @@ struct Repo {
             "owner" : owner,
             "url" : url,
             "updateDate" : updateDate,
-            "description" : description
+            "description" : description,
+            "id" : id
         ]
     }
     

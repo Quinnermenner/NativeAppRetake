@@ -44,7 +44,7 @@ class CommitController: UITableViewController {
     // MARK: Functions
     func gitCommit(owner: String, repoName: String) -> JSON {
         
-        let url = URL(string: "https://api.github.com/repos/\(owner)/\(repoName)/commits?q=\(title)")!
+        let url = URL(string: "https://api.github.com/repos/\(owner)/\(repoName)/commits")!
         let data = try? Data(contentsOf: url)
         let json = JSON(data: data!)
         
@@ -53,7 +53,7 @@ class CommitController: UITableViewController {
     
     func updateCommits() {
         let commitJsons = gitCommit(owner: repo.owner, repoName: repo.name)
-        for (index, subJson):(String, JSON) in commitJsons {
+        for (_, subJson):(String, JSON) in commitJsons {
             let author = subJson["commit"]["committer"]["name"].stringValue
             let date = subJson["commit"]["committer"]["date"].stringValue
             let message = subJson["commit"]["message"].stringValue

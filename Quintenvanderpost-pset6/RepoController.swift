@@ -32,11 +32,8 @@ class RepoController: UITableViewController {
         FIRAuth.auth()!.addStateDidChangeListener { auth, user in
             guard let user = user else { return }
             self.user = User(authData: user)
-            // 1
             let currentUserRef = self.usersRef.child(self.user.uid)
-            // 2
             currentUserRef.setValue(self.user.email)
-            // 3
             currentUserRef.onDisconnectRemoveValue()
         }
 
@@ -75,6 +72,10 @@ class RepoController: UITableViewController {
     }
     
     @IBAction func addButtonDidTouch(_ sender: AnyObject) {
+        let notFoundAlert = UIAlertController(title: "Oops!",
+                                              message: "Could not find specified repository. :(",
+                                              preferredStyle: .alert)
+        
         let alert = UIAlertController(title: "Git Repo",
                                       message: "Add a repository",
                                       preferredStyle: .alert)
@@ -88,43 +89,53 @@ class RepoController: UITableViewController {
         let gitOwner = alert.textFields![0]
         let gitRepo = alert.textFields![1]
         
-        let saveAction = UIAlertAction(title: "Add",
-                                       style: .default) { _ in
-                                        guard gitOwner.text != nil, gitRepo.text != nil else { return }
-                                         // TODO: Implement GitAPI and make classes
-                                        
-                                        let repoJson = self.gitRepoSearch(owner: gitOwner.text!, name: gitRepo.text!)
-                                        let name = repoJson["items"][0]["name"].stringValue
-                                        let description = repoJson["items"][0]["description"].stringValue
-                                        let owner = repoJson["items"][0]["owner"]["login"].stringValue
-                                        let url = repoJson["items"][0]["owner"]["html_url"].stringValue
-                                        let updateDate = repoJson["items"][0]["updated_at"].stringValue
-                                        let id = repoJson["items"][0]["id"].intValue
-                                        let stringID = String(id)
-                                        
-                                        let repo = Repo(name: name, description: description, owner: owner, url: url, updateDate: updateDate)
+        let saveAction = UIAlertAction(title: "Add", style: .default) { _ in
+            guard gitOwner.text != nil, gitRepo.text != nil else { return }
+            // TODO: Implement GitAPI and make classes
 
-                                        self.userRef.child("savedRepos/\(stringID)").setValue(true)
-                                        self.ref.child(stringID).observeSingleEvent(of: .value, with: { (snapshot) in
-                                            if snapshot.exists() == false {
-                                                self.ref.updateChildValues([stringID : (repo.toAnyObject())])
-                                            }
-                                        })
+            let repoJson = self.gitRepoSearch(owner: gitOwner.text!, name: gitRepo.text!)
+            guard repoJson["total_count"] != 0 else {
+                self.present(notFoundAlert, animated: true, completion: nil)
+                return
+            }
+            let name = repoJson["items"][0]["name"].stringValue
+            let description = repoJson["items"][0]["description"].stringValue
+            let owner = repoJson["items"][0]["owner"]["login"].stringValue
+            let url = repoJson["items"][0]["owner"]["html_url"].stringValue
+            let updateDate = repoJson["items"][0]["updated_at"].stringValue
+            let id = repoJson["items"][0]["id"].intValue
+            let stringID = String(id)
                                         
+            let repo = Repo(name: name, description: description, owner: owner, url: url, updateDate: updateDate, id: id)
+
+            self.ref.child(stringID).observeSingleEvent(of: .value, with: { (snapshot) in
+                if snapshot.exists() == false {
+                    self.ref.updateChildValues([stringID : (repo.toAnyObject())])
+                }
+                self.userRef.child("savedRepos/\(stringID)").setValue(true)
+            })
+            
         }
         
         let cancelAction = UIAlertAction(title: "Cancel",
                                          style: .default)
         
+        let abortAction = UIAlertAction(title: "Abort",
+                                        style: .default)
         
+        let retryAction = UIAlertAction(title: "Retry", style: .default) { _ in guard gitOwner.text != nil, gitRepo.text != nil else { return }
+            alert.textFields![0].text = gitOwner.text
+            alert.textFields![1].text = gitRepo.text
+            self.present(alert, animated: true, completion: nil)
+        }
         
         alert.addAction(saveAction)
         alert.addAction(cancelAction)
+        notFoundAlert.addAction(retryAction)
+        notFoundAlert.addAction(abortAction)
         
         present(alert, animated: true, completion: nil)
     }
-
-    
 
     @IBAction func logoutDidTouch(_ sender: AnyObject) {
         try! FIRAuth.auth()!.signOut()
@@ -168,8 +179,8 @@ class RepoController: UITableViewController {
     override func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCellEditingStyle, forRowAt indexPath: IndexPath) {
         if editingStyle == .delete {
             let repo = repos[indexPath.row]
-            print(repo)
-            repo.ref?.removeValue()
+            let repoID = repo.id
+            userRef.child("savedRepos/\(repoID)").setValue(false)
         }
     }
     
