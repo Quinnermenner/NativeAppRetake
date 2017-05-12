@@ -16,16 +16,19 @@ class RepoController: UITableViewController {
     @IBOutlet var repoTable: UITableView!
     
     // MARK Constants:
+    let baseRef = FIRDatabase.database().reference()
     let ref = FIRDatabase.database().reference(withPath: "repo-list")
     let usersRef = FIRDatabase.database().reference(withPath: "online")
     
     // MARK: Properties
     var repos: [Repo] = []
     var user: User!
+    var userRef: FIRDatabaseReference!
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        
+        let userID = FIRAuth.auth()?.currentUser?.uid
+        self.userRef = baseRef.child("users").child(userID!)
         FIRAuth.auth()!.addStateDidChangeListener { auth, user in
             guard let user = user else { return }
             self.user = User(authData: user)
@@ -38,14 +41,23 @@ class RepoController: UITableViewController {
         }
 
         // Synchronize Data to tableView
-        ref.observe(.value, with: { snapshot in
-            var repoList: [Repo] = []
-                for item in snapshot.children {
-                let repo = Repo(snapshot: item as! FIRDataSnapshot)
-                repoList.append(repo)
+        userRef.child("savedRepos").observe(.value, with: { snapshot in
+            var repoIDs = [String]()
+            let repoDict = snapshot.value as? [String : Bool] ?? [:]
+            for (repoID, bool) in repoDict {
+                if bool == true {
+                    repoIDs.append(repoID)
+                }
             }
-            self.repos = repoList
-            self.repoTable.reloadData()
+            var repoList: [Repo] = []
+            for repoID in repoIDs {
+                self.ref.child(repoID).observeSingleEvent(of: .value, with: { (snapshot) in
+                    let repo = Repo(snapshot: snapshot)
+                    repoList.append(repo)
+                    self.repos = repoList
+                    self.repoTable.reloadData()
+                })
+            }
         })
         tableView.rowHeight = UITableViewAutomaticDimension
         tableView.estimatedRowHeight = 60
@@ -88,12 +100,17 @@ class RepoController: UITableViewController {
                                         let url = repoJson["items"][0]["owner"]["html_url"].stringValue
                                         let updateDate = repoJson["items"][0]["updated_at"].stringValue
                                         let id = repoJson["items"][0]["id"].intValue
+                                        let stringID = String(id)
                                         
                                         let repo = Repo(name: name, description: description, owner: owner, url: url, updateDate: updateDate)
+
+                                        self.userRef.child("savedRepos/\(stringID)").setValue(true)
+                                        self.ref.child(stringID).observeSingleEvent(of: .value, with: { (snapshot) in
+                                            if snapshot.exists() == false {
+                                                self.ref.updateChildValues([stringID : (repo.toAnyObject())])
+                                            }
+                                        })
                                         
-                                        let repoRef = self.ref.child(String(id))
-                                        
-                                        repoRef.setValue(repo.toAnyObject())
         }
         
         let cancelAction = UIAlertAction(title: "Cancel",

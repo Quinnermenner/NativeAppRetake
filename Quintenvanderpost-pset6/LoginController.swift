@@ -10,7 +10,7 @@ import UIKit
 import Firebase
 import SwiftyJSON
 
-class LoginController: UIViewController {
+class LoginController: UIViewController, UITextFieldDelegate  {
     
     // MARK: Outlets
     @IBOutlet weak var loginEmail: UITextField!
@@ -18,15 +18,40 @@ class LoginController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        loginPass.delegate = self
+        loginPass.tag = 0
         FIRAuth.auth()!.addStateDidChangeListener() { auth, user in
             if user != nil {
                 self.performSegue(withIdentifier: "segueLogin", sender: nil)
             }
         }
+        
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        
+        // Hide the navigation bar on the this view controller
+        self.navigationController?.setNavigationBarHidden(true, animated: animated)
+    }
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        
+        // Show the navigation bar on other view controllers
+        self.navigationController?.setNavigationBarHidden(false, animated: animated)
+    }
+    
+    func textFieldShouldReturn(_ textField: UITextField) -> Bool {
+        textField.resignFirstResponder()
+        if textField.tag == 0 {
+            loginDidTouch(self)
+        }
+        loginDidTouch(self)
+        return true
     }
     
     @IBAction func loginDidTouch(_ sender: AnyObject) {
-        print("pressed login")
         FIRAuth.auth()!.signIn(withEmail: loginEmail.text!,
                                password: loginPass.text!)
     }
@@ -53,6 +78,13 @@ class LoginController: UIViewController {
                                            password: passwordField.text!) { user, error in
                                                 if error == nil {
                                                 // 3
+                                                let ref : FIRDatabaseReference!
+                                                ref = FIRDatabase.database().reference()
+                                                ref.child("users").child(user!.uid).setValue([
+                                                        "Email": emailField.text!,
+                                                        "Nickname": emailField.text!,
+                                                        "Repos": []])
+
                                                 FIRAuth.auth()!.signIn(withEmail: emailField.text!,password: passwordField.text!)
                                                     }
                                         }

@@ -16,6 +16,7 @@ class CommitController: UITableViewController {
     var repo: Repo!
     var commitRef: FIRDatabaseReference!
     var commits: [Commit] = []
+    var sortedCommits: [Commit] = []
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -29,6 +30,7 @@ class CommitController: UITableViewController {
             }
             self.commits = commitList
             self.tableView.reloadData()
+            self.sortedCommits = self.commits.sorted(by: {$0.date < $1.date})
         })
         tableView.rowHeight = UITableViewAutomaticDimension
         tableView.estimatedRowHeight = 60
@@ -78,8 +80,7 @@ class CommitController: UITableViewController {
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "CommitCell", for: indexPath) as! CommitCell
-
-        let commit = commits[indexPath.row]
+        let commit = sortedCommits[indexPath.row]
         
         cell.name.text = commit.author
         cell.comment.text = commit.message
