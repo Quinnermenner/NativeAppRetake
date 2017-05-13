@@ -21,6 +21,9 @@
 		39CE73921DFDA919009020C4 /* Repo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39CE73911DFDA919009020C4 /* Repo.swift */; };
 		39F7ABF91DFEB88800B67AE6 /* User.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39F7ABF81DFEB88800B67AE6 /* User.swift */; };
 		434FD512491CD28F182DD680 /* Pods_Quintenvanderpost_pset6.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3C877F833BB85FE2CE20B182 /* Pods_Quintenvanderpost_pset6.framework */; };
+		4E46C2DE1EC7261A006711B9 /* Message.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E46C2DD1EC7261A006711B9 /* Message.swift */; };
+		4E46C2E01EC727A6006711B9 /* MessageCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E46C2DF1EC727A6006711B9 /* MessageCell.swift */; };
+		4E46C2E21EC73808006711B9 /* MCViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E46C2E11EC73808006711B9 /* MCViewController.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -41,6 +44,9 @@
 		39F7ABF81DFEB88800B67AE6 /* User.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = User.swift; sourceTree = "<group>"; };
 		3C877F833BB85FE2CE20B182 /* Pods_Quintenvanderpost_pset6.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Quintenvanderpost_pset6.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		4E08254A1EA12496007DD1F2 /* Quintenvanderpost-pset6.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "Quintenvanderpost-pset6.entitlements"; sourceTree = "<group>"; };
+		4E46C2DD1EC7261A006711B9 /* Message.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Message.swift; sourceTree = "<group>"; };
+		4E46C2DF1EC727A6006711B9 /* MessageCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MessageCell.swift; sourceTree = "<group>"; };
+		4E46C2E11EC73808006711B9 /* MCViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MCViewController.swift; sourceTree = "<group>"; };
 		7158B447891F17A69E7CFED4 /* Pods-Quintenvanderpost-pset6.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Quintenvanderpost-pset6.release.xcconfig"; path = "Pods/Target Support Files/Pods-Quintenvanderpost-pset6/Pods-Quintenvanderpost-pset6.release.xcconfig"; sourceTree = "<group>"; };
 		B86CA3D6B57FD1278316E3E6 /* Pods-Quintenvanderpost-pset6.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Quintenvanderpost-pset6.debug.xcconfig"; path = "Pods/Target Support Files/Pods-Quintenvanderpost-pset6/Pods-Quintenvanderpost-pset6.debug.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -104,6 +110,7 @@
 				39CE73801DFD9C9C009020C4 /* LoginController.swift */,
 				39CE73871DFDA2E3009020C4 /* RepoController.swift */,
 				397DEB201E0046CE000A28DE /* CommitController.swift */,
+				4E46C2E11EC73808006711B9 /* MCViewController.swift */,
 			);
 			name = Controllers;
 			sourceTree = "<group>";
@@ -140,6 +147,7 @@
 				39CE73911DFDA919009020C4 /* Repo.swift */,
 				39F7ABF81DFEB88800B67AE6 /* User.swift */,
 				3900E9211E01602F007922ED /* Commit.swift */,
+				4E46C2DD1EC7261A006711B9 /* Message.swift */,
 			);
 			name = Models;
 			sourceTree = "<group>";
@@ -149,6 +157,7 @@
 			children = (
 				39CE738D1DFDA66F009020C4 /* RepoCell.swift */,
 				397DEB221E004787000A28DE /* CommitCell.swift */,
+				4E46C2DF1EC727A6006711B9 /* MessageCell.swift */,
 			);
 			name = Cells;
 			sourceTree = "<group>";
@@ -292,6 +301,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4E46C2E21EC73808006711B9 /* MCViewController.swift in Sources */,
+				4E46C2E01EC727A6006711B9 /* MessageCell.swift in Sources */,
 				3900E9221E01602F007922ED /* Commit.swift in Sources */,
 				39CE736F1DFD943F009020C4 /* AppDelegate.swift in Sources */,
 				39CE73881DFDA2E3009020C4 /* RepoController.swift in Sources */,
@@ -299,6 +310,7 @@
 				397DEB211E0046CE000A28DE /* CommitController.swift in Sources */,
 				397DEB231E004787000A28DE /* CommitCell.swift in Sources */,
 				39CE73921DFDA919009020C4 /* Repo.swift in Sources */,
+				4E46C2DE1EC7261A006711B9 /* Message.swift in Sources */,
 				39CE73811DFD9C9C009020C4 /* LoginController.swift in Sources */,
 				39CE738E1DFDA66F009020C4 /* RepoCell.swift in Sources */,
 			);

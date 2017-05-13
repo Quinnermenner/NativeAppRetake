@@ -186,14 +186,14 @@ class RepoController: UITableViewController {
     
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         let selectedRow = repoTable.indexPathForSelectedRow
-        performSegue(withIdentifier: "segueToCommitController", sender: selectedRow)
+        performSegue(withIdentifier: "segueToMCController", sender: selectedRow)
     }
     
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        if segue.identifier == "segueToCommitController" {
+        if segue.identifier == "segueToMCController" {
             let indexPath = self.repoTable.indexPathForSelectedRow
             let repo = repos[(indexPath?.row)!]
-            let destination = segue.destination as! CommitController
+            let destination = segue.destination as! MCViewController
             destination.repo = repo
         }
     }
