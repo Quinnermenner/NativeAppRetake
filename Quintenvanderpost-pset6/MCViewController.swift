@@ -19,6 +19,7 @@ class MCViewController: UIViewController {
     var sortedCommits: [Commit] = []
    
     @IBOutlet weak var tableView: UITableView!
+    @IBOutlet weak var messageTextField: UITextField!
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -37,8 +38,23 @@ class MCViewController: UIViewController {
             self.tableView.reloadData()
             self.sortedCommits = self.commits.sorted(by: {$0.date < $1.date})
         })
+        
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(MCViewController.hideKeyboard))
+        tapGesture.cancelsTouchesInView = true
+        tableView.addGestureRecognizer(tapGesture)
+        
+        NotificationCenter.default.addObserver(self, selector: #selector(MCViewController.keyboardWillShow), name: NSNotification.Name.UIKeyboardWillShow, object: nil)
+        
+        NotificationCenter.default.addObserver(self, selector: #selector(MCViewController.keyboardWillHide), name: NSNotification.Name.UIKeyboardWillHide, object: nil)
+        
+        
         tableView.rowHeight = UITableViewAutomaticDimension
         tableView.estimatedRowHeight = 60
+    }
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        NotificationCenter.default.removeObserver(self, name: NSNotification.Name.UIKeyboardWillShow, object: nil)
+        NotificationCenter.default.removeObserver(self, name: NSNotification.Name.UIKeyboardWillHide, object: nil)
     }
     
     // MARK: Functions
@@ -49,6 +65,10 @@ class MCViewController: UIViewController {
         let json = JSON(data: data!)
         
         return json
+    }
+    
+    func hideKeyboard() {
+        self.view.endEditing(true)
     }
     
     func updateCommits() {
@@ -64,6 +84,26 @@ class MCViewController: UIViewController {
         }
     }
 
+    @IBAction func postButtonDidTouch(_ sender: Any) {
+        
+    }
+    
+    func keyboardWillShow(notification: NSNotification) {
+        if let keyboardSize = (notification.userInfo?[UIKeyboardFrameBeginUserInfoKey] as? NSValue)?.cgRectValue {
+            if self.view.frame.origin.y == 0{
+                self.view.frame.origin.y -= keyboardSize.height
+            }
+        }
+    }
+    
+    func keyboardWillHide(notification: NSNotification) {
+        if let keyboardSize = (notification.userInfo?[UIKeyboardFrameBeginUserInfoKey] as? NSValue)?.cgRectValue {
+            if self.view.frame.origin.y != 0{
+                self.view.frame.origin.y += keyboardSize.height
+            }
+        }
+    }
+    
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
         // Dispose of any resources that can be recreated.
