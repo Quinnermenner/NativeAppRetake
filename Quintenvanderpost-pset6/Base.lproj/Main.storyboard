@@ -109,6 +109,24 @@
             </objects>
             <point key="canvasLocation" x="33" y="139"/>
         </scene>
+        <!--Account Details View Controller-->
+        <scene sceneID="UVU-rY-2UT">
+            <objects>
+                <viewController id="0cr-R7-B7g" customClass="AccountDetailsViewController" customModule="Quintenvanderpost_pset6" customModuleProvider="target" sceneMemberID="viewController">
+                    <layoutGuides>
+                        <viewControllerLayoutGuide type="top" id="LjH-39-DD1"/>
+                        <viewControllerLayoutGuide type="bottom" id="98E-LW-uwW"/>
+                    </layoutGuides>
+                    <view key="view" contentMode="scaleToFill" id="Dtk-Eq-s0Z">
+                        <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                    </view>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="2Qr-aL-YgV" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="2846" y="-622"/>
+        </scene>
         <!--Repo Controller-->
         <scene sceneID="X4D-ZA-8zM">
             <objects>
@@ -122,7 +140,7 @@
                                 <rect key="frame" x="0.0" y="28" width="375" height="44"/>
                                 <autoresizingMask key="autoresizingMask"/>
                                 <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="tOS-zj-oKE" id="N0l-cK-BEs">
-                                    <rect key="frame" x="0.0" y="0.0" width="375" height="43.5"/>
+                                    <rect key="frame" x="0.0" y="0.0" width="375" height="44"/>
                                     <autoresizingMask key="autoresizingMask"/>
                                     <subviews>
                                         <stackView opaque="NO" contentMode="scaleToFill" axis="vertical" translatesAutoresizingMaskIntoConstraints="NO" id="IJ2-bY-PTA">
@@ -190,6 +208,7 @@
                         <segue destination="SKz-WO-Npu" kind="show" identifier="segueToCommitController" id="SLH-Hb-5mE"/>
                         <segue destination="BYZ-38-t0r" kind="show" identifier="segueToLoginController" id="Zyp-yO-KYd"/>
                         <segue destination="x4M-gS-Dbd" kind="show" identifier="segueToMCController" id="9pB-j3-f1Q"/>
+                        <segue destination="0cr-R7-B7g" kind="show" identifier="segueToAccountDetailsViewController" id="c8O-SQ-XxF"/>
                     </connections>
                 </tableViewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="XWZ-io-wUc" userLabel="First Responder" sceneMemberID="firstResponder"/>
@@ -359,7 +378,7 @@
                                                 <rect key="frame" x="0.0" y="28" width="375" height="44"/>
                                                 <autoresizingMask key="autoresizingMask"/>
                                                 <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="vQS-fz-yOD" id="Y26-0Q-VCU">
-                                                    <rect key="frame" x="0.0" y="0.0" width="375" height="43.5"/>
+                                                    <rect key="frame" x="0.0" y="0.0" width="375" height="44"/>
                                                     <autoresizingMask key="autoresizingMask"/>
                                                     <subviews>
                                                         <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="wXn-ec-7Cb">
@@ -419,7 +438,7 @@
                                                 <rect key="frame" x="0.0" y="72" width="375" height="44"/>
                                                 <autoresizingMask key="autoresizingMask"/>
                                                 <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="Lhg-VD-7jC" id="NVw-zg-YIc">
-                                                    <rect key="frame" x="0.0" y="0.0" width="375" height="43.5"/>
+                                                    <rect key="frame" x="0.0" y="0.0" width="375" height="44"/>
                                                     <autoresizingMask key="autoresizingMask"/>
                                                     <subviews>
                                                         <stackView opaque="NO" contentMode="scaleToFill" distribution="fillEqually" alignment="center" translatesAutoresizingMaskIntoConstraints="NO" id="pOa-yo-mdN">

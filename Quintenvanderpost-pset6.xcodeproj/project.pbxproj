@@ -26,6 +26,7 @@
 		4E46C2E21EC73808006711B9 /* MCViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E46C2E11EC73808006711B9 /* MCViewController.swift */; };
 		4E46C2E41EC74B57006711B9 /* Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E46C2E31EC74B57006711B9 /* Extensions.swift */; };
 		4E5E08C31EC8B7A400F831E2 /* Protocols.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E5E08C21EC8B7A400F831E2 /* Protocols.swift */; };
+		4EDB08991EC9113500BCCEC9 /* AccountDetailsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EDB08981EC9113500BCCEC9 /* AccountDetailsViewController.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -51,6 +52,7 @@
 		4E46C2E11EC73808006711B9 /* MCViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MCViewController.swift; sourceTree = "<group>"; };
 		4E46C2E31EC74B57006711B9 /* Extensions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Extensions.swift; sourceTree = "<group>"; };
 		4E5E08C21EC8B7A400F831E2 /* Protocols.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Protocols.swift; sourceTree = "<group>"; };
+		4EDB08981EC9113500BCCEC9 /* AccountDetailsViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AccountDetailsViewController.swift; sourceTree = "<group>"; };
 		7158B447891F17A69E7CFED4 /* Pods-Quintenvanderpost-pset6.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Quintenvanderpost-pset6.release.xcconfig"; path = "Pods/Target Support Files/Pods-Quintenvanderpost-pset6/Pods-Quintenvanderpost-pset6.release.xcconfig"; sourceTree = "<group>"; };
 		B86CA3D6B57FD1278316E3E6 /* Pods-Quintenvanderpost-pset6.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Quintenvanderpost-pset6.debug.xcconfig"; path = "Pods/Target Support Files/Pods-Quintenvanderpost-pset6/Pods-Quintenvanderpost-pset6.debug.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -115,6 +117,7 @@
 				39CE73871DFDA2E3009020C4 /* RepoController.swift */,
 				397DEB201E0046CE000A28DE /* CommitController.swift */,
 				4E46C2E11EC73808006711B9 /* MCViewController.swift */,
+				4EDB08981EC9113500BCCEC9 /* AccountDetailsViewController.swift */,
 			);
 			name = Controllers;
 			sourceTree = "<group>";
@@ -282,7 +285,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "diff \"${PODS_ROOT}/../Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n";
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n";
 			showEnvVarsInLog = 0;
 		};
 		DDAF582F274D5A80F731FE25 /* [CP] Copy Pods Resources */ = {
@@ -315,6 +318,7 @@
 				39F7ABF91DFEB88800B67AE6 /* User.swift in Sources */,
 				397DEB211E0046CE000A28DE /* CommitController.swift in Sources */,
 				397DEB231E004787000A28DE /* CommitCell.swift in Sources */,
+				4EDB08991EC9113500BCCEC9 /* AccountDetailsViewController.swift in Sources */,
 				4E46C2E41EC74B57006711B9 /* Extensions.swift in Sources */,
 				4E5E08C31EC8B7A400F831E2 /* Protocols.swift in Sources */,
 				39CE73921DFDA919009020C4 /* Repo.swift in Sources */,

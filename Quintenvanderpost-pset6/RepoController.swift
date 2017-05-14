@@ -9,11 +9,16 @@
 import UIKit
 import Firebase
 import SwiftyJSON
+import AZDropdownMenu
 
 class RepoController: UITableViewController {
     
     // MARK Outlets:
     @IBOutlet var repoTable: UITableView!
+    
+    // Mark dropdown:
+    let titles = ["Account details", "Logout"]
+    
     
     // MARK Constants:
     let baseRef = FIRDatabase.database().reference()
@@ -24,11 +29,19 @@ class RepoController: UITableViewController {
     var repos: [Repo] = []
     var user: User!
     var userRef: FIRDatabaseReference!
+    var menu: AZDropdownMenu!
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        constructMenu()
+        
+        let button = UIBarButtonItem(image: UIImage(named: "options"), style: .plain, target: self, action: #selector(RepoController.showDropdown))
+        navigationItem.leftBarButtonItem = button
+        
         let userID = FIRAuth.auth()?.currentUser?.uid
         self.userRef = baseRef.child("users").child(userID!)
+        
         FIRAuth.auth()!.addStateDidChangeListener { auth, user in
             guard let user = user else { return }
             self.user = User(authData: user)
@@ -142,6 +155,37 @@ class RepoController: UITableViewController {
         performSegue(withIdentifier: "segueToLoginController", sender: nil)
     }
     
+    func logoutUser() {
+        
+        try! FIRAuth.auth()!.signOut()
+        performSegue(withIdentifier: "segueToLoginController", sender: nil)
+    }
+    
+    func constructMenu() {
+        
+        menu = AZDropdownMenu(titles: titles)
+        menu.cellTapHandler = { [weak self] (indexPath: IndexPath) -> Void in
+            let title: String = self!.titles[indexPath.row]
+            switch  title {
+            case "Account details":
+                self?.performSegue(withIdentifier: "segueToAccountDetailsViewController", sender: title)
+            case "Logout":
+                self?.logoutUser()
+            default:
+                print("Err don't get this")
+            }
+            
+        }
+    }
+    
+    func showDropdown() {
+        if (self.menu?.isDescendant(of: self.view) == true) {
+            self.menu?.hideMenu()
+        } else {
+            self.menu?.showMenuFromView(self.view)
+        }
+    }
+    
     
 
     // MARK: - Table view data source
@@ -195,6 +239,11 @@ class RepoController: UITableViewController {
             let repo = repos[(indexPath?.row)!]
             let destination = segue.destination as! MCViewController
             destination.repo = repo
+            destination.user = self.user
+            destination.userRef = self.userRef
+        }
+        else if segue.identifier == "segueToAccountDetailsViewController" {
+            let destination = segue.destination as! AccountDetailsViewController
             destination.user = self.user
             destination.userRef = self.userRef
         }

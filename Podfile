@@ -10,6 +10,7 @@ target 'Quintenvanderpost-pset6' do
   pod 'Firebase/Database'
   pod 'Firebase/Auth'
   pod 'SwiftyJSON'
+  pod 'AZDropdownMenu'
 
   # Pods for Quintenvanderpost-pset6
 
