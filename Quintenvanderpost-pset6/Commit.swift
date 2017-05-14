@@ -9,7 +9,7 @@
 import Foundation
 import Firebase
 
-struct Commit {
+struct Commit: MessageCommitProtocol {
     let key: String
     let author: String
     let ref: FIRDatabaseReference?

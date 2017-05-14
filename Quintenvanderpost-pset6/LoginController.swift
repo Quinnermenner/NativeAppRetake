@@ -83,7 +83,8 @@ class LoginController: UIViewController, UITextFieldDelegate  {
                                                 ref.child("users").child(user!.uid).setValue([
                                                         "Email": emailField.text!,
                                                         "Nickname": emailField.text!,
-                                                        "Repos": []])
+                                                        "Repos": [],
+                                                        "PostCount": 0])
 
                                                 FIRAuth.auth()!.signIn(withEmail: emailField.text!,password: passwordField.text!)
                                                     }

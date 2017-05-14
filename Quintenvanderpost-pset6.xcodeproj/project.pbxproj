@@ -25,6 +25,7 @@
 		4E46C2E01EC727A6006711B9 /* MessageCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E46C2DF1EC727A6006711B9 /* MessageCell.swift */; };
 		4E46C2E21EC73808006711B9 /* MCViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E46C2E11EC73808006711B9 /* MCViewController.swift */; };
 		4E46C2E41EC74B57006711B9 /* Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E46C2E31EC74B57006711B9 /* Extensions.swift */; };
+		4E5E08C31EC8B7A400F831E2 /* Protocols.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E5E08C21EC8B7A400F831E2 /* Protocols.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -49,6 +50,7 @@
 		4E46C2DF1EC727A6006711B9 /* MessageCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MessageCell.swift; sourceTree = "<group>"; };
 		4E46C2E11EC73808006711B9 /* MCViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MCViewController.swift; sourceTree = "<group>"; };
 		4E46C2E31EC74B57006711B9 /* Extensions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Extensions.swift; sourceTree = "<group>"; };
+		4E5E08C21EC8B7A400F831E2 /* Protocols.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Protocols.swift; sourceTree = "<group>"; };
 		7158B447891F17A69E7CFED4 /* Pods-Quintenvanderpost-pset6.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Quintenvanderpost-pset6.release.xcconfig"; path = "Pods/Target Support Files/Pods-Quintenvanderpost-pset6/Pods-Quintenvanderpost-pset6.release.xcconfig"; sourceTree = "<group>"; };
 		B86CA3D6B57FD1278316E3E6 /* Pods-Quintenvanderpost-pset6.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Quintenvanderpost-pset6.debug.xcconfig"; path = "Pods/Target Support Files/Pods-Quintenvanderpost-pset6/Pods-Quintenvanderpost-pset6.debug.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -151,6 +153,7 @@
 				39F7ABF81DFEB88800B67AE6 /* User.swift */,
 				3900E9211E01602F007922ED /* Commit.swift */,
 				4E46C2DD1EC7261A006711B9 /* Message.swift */,
+				4E5E08C21EC8B7A400F831E2 /* Protocols.swift */,
 			);
 			name = Models;
 			sourceTree = "<group>";
@@ -313,6 +316,7 @@
 				397DEB211E0046CE000A28DE /* CommitController.swift in Sources */,
 				397DEB231E004787000A28DE /* CommitCell.swift in Sources */,
 				4E46C2E41EC74B57006711B9 /* Extensions.swift in Sources */,
+				4E5E08C31EC8B7A400F831E2 /* Protocols.swift in Sources */,
 				39CE73921DFDA919009020C4 /* Repo.swift in Sources */,
 				4E46C2DE1EC7261A006711B9 /* Message.swift in Sources */,
 				39CE73811DFD9C9C009020C4 /* LoginController.swift in Sources */,

@@ -14,9 +14,13 @@ class MCViewController: UIViewController {
     
     // MARK: Initializers
     var repo: Repo!
+    var user: User!
+    var userRef: FIRDatabaseReference!
     var commitRef: FIRDatabaseReference!
-    var commits: [Commit] = []
-    var sortedCommits: [Commit] = []
+    var messageRef: FIRDatabaseReference!
+    var commits = [Commit]()
+    var messages = [Message]()
+    var tableCellList = [MessageCommitProtocol]()
    
     @IBOutlet weak var tableView: UITableView!
     @IBOutlet weak var messageTextField: UITextField!
@@ -27,7 +31,10 @@ class MCViewController: UIViewController {
         tableView.delegate = self
         
         commitRef = repo.ref?.child("commits")
+        messageRef = repo.ref?.child("messages")
+        
         updateCommits()
+        
         commitRef.observe(.value, with: { snapshot in
             var commitList: [Commit] = []
             for item in snapshot.children {
@@ -35,8 +42,17 @@ class MCViewController: UIViewController {
                 commitList.append(commit)
             }
             self.commits = commitList
-            self.tableView.reloadData()
-            self.sortedCommits = self.commits.sorted(by: {$0.date < $1.date})
+            self.constructTableViewCells(commitList: self.commits, messageList: self.messages)
+        })
+        
+        messageRef.observe(.value, with: { (snapshot) in
+            var messageList : [Message] = []
+            for item in snapshot.children {
+                let message = Message.init(snapshot: item as! FIRDataSnapshot)
+                messageList.append(message)
+            }
+            self.messages = messageList
+            self.constructTableViewCells(commitList: self.commits, messageList: self.messages)
         })
         
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(MCViewController.hideKeyboard))
@@ -67,6 +83,21 @@ class MCViewController: UIViewController {
         return json
     }
     
+    func constructTableViewCells(commitList: [Commit], messageList: [Message]) {
+        
+        tableCellList = [MessageCommitProtocol]()
+        for commit in commitList {
+            tableCellList.append(commit)
+        }
+        for message in messageList {
+            tableCellList.append(message)
+        }
+        self.tableCellList = tableCellList.sorted(by: {$0.date < $1.date})
+        self.tableView.reloadData()
+        
+
+    }
+    
     func hideKeyboard() {
         self.view.endEditing(true)
     }
@@ -80,12 +111,39 @@ class MCViewController: UIViewController {
             let sha = subJson["sha"].stringValue
             
             let commit = Commit(author: author, message: message, sha: sha, date: date)
-            commitRef.child(sha).setValue(commit.toAnyObject())
+            self.commitRef.child(sha).observeSingleEvent(of: .value, with: { (snapshot) in
+                if snapshot.exists() == false {
+                    self.commitRef.updateChildValues([sha : commit.toAnyObject()])
+                }
+            })
         }
+    }
+    
+    func saveMessage(text: String, date: String, uid: String) {
+
+        userRef.observeSingleEvent(of: .value, with: { (snapshot) in
+            let value = snapshot.value as? NSDictionary
+            let postCount = value?["PostCount"] as? Int ?? 0
+            let userName = value?["Nickname"] as? String ?? ""
+            let messageUID = self.user.uid + "-" + String(describing: postCount)
+            let message = Message.init(author: userName, text: text, date: date)
+            
+            self.messageRef?.updateChildValues([messageUID : message.toAnyObject()])
+            self.userRef.updateChildValues(["PostCount" : postCount + 1])
+        })
+
+        
     }
 
     @IBAction func postButtonDidTouch(_ sender: Any) {
+        let stringFromDate = Date().iso8601    // "2017-03-22T13:22:13.933Z"
+        let messageText = messageTextField.text!
         
+        if messageText != "" {
+            saveMessage(text: messageText, date: stringFromDate, uid: user.uid)
+        }
+        
+
     }
     
     func keyboardWillShow(notification: NSNotification) {
@@ -98,7 +156,7 @@ class MCViewController: UIViewController {
     
     func keyboardWillHide(notification: NSNotification) {
         if let keyboardSize = (notification.userInfo?[UIKeyboardFrameBeginUserInfoKey] as? NSValue)?.cgRectValue {
-            if self.view.frame.origin.y != 0{
+            if self.view.frame.origin.y != 0 {
                 self.view.frame.origin.y += keyboardSize.height
             }
         }
@@ -129,18 +187,38 @@ extension MCViewController: UITableViewDataSource, UITableViewDelegate {
     }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return commits.count
+        return tableCellList.count
     }
     
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "CommitCell", for: indexPath) as! CommitCell
-        let commit = sortedCommits[indexPath.row]
+
+        if let commit = tableCellList[indexPath.row] as? Commit {
+            let cell = tableView.dequeueReusableCell(withIdentifier: "CommitCell", for: indexPath) as! CommitCell
+            
+            cell.name.text = commit.author
+            cell.comment.text = commit.message
+            
+            return cell
+        }
+            
+        else if let message = tableCellList[indexPath.row] as? Message {
+            let cell = tableView.dequeueReusableCell(withIdentifier: "MessageCell", for: indexPath) as! MessageCell
+            
+            cell.name.text = message.author
+            cell.comment.text = message.text
+            
+            return cell
+        }
         
-        cell.name.text = commit.author
-        cell.comment.text = commit.message
+        else {
+            
+            let cell: UITableViewCell = UITableViewCell(style: UITableViewCellStyle.default, reuseIdentifier: "ErrorCell")
+            return cell
         
-        return cell
+        }
+        
+        
     }
     
 }

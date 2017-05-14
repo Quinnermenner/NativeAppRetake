@@ -195,6 +195,8 @@ class RepoController: UITableViewController {
             let repo = repos[(indexPath?.row)!]
             let destination = segue.destination as! MCViewController
             destination.repo = repo
+            destination.user = self.user
+            destination.userRef = self.userRef
         }
     }
     
