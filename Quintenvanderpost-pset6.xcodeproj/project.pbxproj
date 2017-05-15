@@ -8,7 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		3900E9221E01602F007922ED /* Commit.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3900E9211E01602F007922ED /* Commit.swift */; };
-		397DEB211E0046CE000A28DE /* CommitController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 397DEB201E0046CE000A28DE /* CommitController.swift */; };
 		397DEB231E004787000A28DE /* CommitCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 397DEB221E004787000A28DE /* CommitCell.swift */; };
 		39CE736F1DFD943F009020C4 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39CE736E1DFD943F009020C4 /* AppDelegate.swift */; };
 		39CE73741DFD943F009020C4 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 39CE73721DFD943F009020C4 /* Main.storyboard */; };
@@ -31,7 +30,6 @@
 
 /* Begin PBXFileReference section */
 		3900E9211E01602F007922ED /* Commit.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Commit.swift; sourceTree = "<group>"; };
-		397DEB201E0046CE000A28DE /* CommitController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CommitController.swift; sourceTree = "<group>"; };
 		397DEB221E004787000A28DE /* CommitCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CommitCell.swift; sourceTree = "<group>"; };
 		39CE736B1DFD943F009020C4 /* Quintenvanderpost-pset6.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Quintenvanderpost-pset6.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		39CE736E1DFD943F009020C4 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
@@ -115,7 +113,6 @@
 			children = (
 				39CE73801DFD9C9C009020C4 /* LoginController.swift */,
 				39CE73871DFDA2E3009020C4 /* RepoController.swift */,
-				397DEB201E0046CE000A28DE /* CommitController.swift */,
 				4E46C2E11EC73808006711B9 /* MCViewController.swift */,
 				4EDB08981EC9113500BCCEC9 /* AccountDetailsViewController.swift */,
 			);
@@ -316,7 +313,6 @@
 				39CE736F1DFD943F009020C4 /* AppDelegate.swift in Sources */,
 				39CE73881DFDA2E3009020C4 /* RepoController.swift in Sources */,
 				39F7ABF91DFEB88800B67AE6 /* User.swift in Sources */,
-				397DEB211E0046CE000A28DE /* CommitController.swift in Sources */,
 				397DEB231E004787000A28DE /* CommitCell.swift in Sources */,
 				4EDB08991EC9113500BCCEC9 /* AccountDetailsViewController.swift in Sources */,
 				4E46C2E41EC74B57006711B9 /* Extensions.swift in Sources */,

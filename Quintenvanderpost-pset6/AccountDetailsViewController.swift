@@ -19,7 +19,6 @@ class AccountDetailsViewController: UIViewController, UITextFieldDelegate {
     var user: User!
     var nicknameText: String = ""
     var activeTextField = UITextField()
-//    var credential: FIRAuthCredential
     
     // MARK: Outlets
     @IBOutlet weak var nickName: UITextField!
@@ -32,6 +31,7 @@ class AccountDetailsViewController: UIViewController, UITextFieldDelegate {
         super.viewDidLoad()
         
         self.title = "Account Details"
+        self.navigationItem.backBarButtonItem?.title = "Repos"
         userRef.observeSingleEvent(of: .value, with: { (snapshot) in
             // Get user value
             let value = snapshot.value as? NSDictionary
@@ -110,6 +110,12 @@ class AccountDetailsViewController: UIViewController, UITextFieldDelegate {
         self.activeTextField.resignFirstResponder()
     }
     
+    func textFieldShouldReturn(_ textField: UITextField) -> Bool {
+        self.activeTextField = textField
+        self.doneButtonTapped()
+        return true
+    }
+    
     func doneButtonTapped() {
         
         switch self.activeTextField.tag {
@@ -163,8 +169,26 @@ class AccountDetailsViewController: UIViewController, UITextFieldDelegate {
     
     func updateNickname(newNickname: String) {
         
-        userRef.child("Nickname").setValue(newNickname)
         self.nicknameText = newNickname
+        DispatchQueue.main.async {
+            self.userRef.child("Nickname").setValue(newNickname)
+            
+            self.userRef.observeSingleEvent(of: .value, with: { (snapshot) in
+                // Get user value
+                let value = snapshot.value as? NSDictionary
+                let nick = value?["Nickname"] as? String ?? self.nicknameText
+                if let messages = value?["messages"] as? NSDictionary {
+                    for (_, messageRef) in messages {
+                        let ref = FIRDatabase.database().reference(fromURL: String(describing: messageRef))
+                        ref.child("author").setValue(nick)
+                    }
+                }
+                
+                // ...
+            }) { (error) in
+                print(error.localizedDescription)
+            }
+        }
     }
     
     func constructEditButtons() {
