@@ -207,7 +207,13 @@ class RepoController: UITableViewController {
         let repo = repos[indexPath.row]
      
         cell.name.text = repo.name
-        cell.repoDescription.text = repo.description
+        cell.name.font = UIFont.boldSystemFont(ofSize: 16.0)
+        if repo.description != "" {
+            cell.repoDescription.text = repo.description
+        } else {
+            cell.repoDescription.text = "--------"
+        }
+        cell.repoDescription.font = UIFont.italicSystemFont(ofSize: 14.0)
         cell.updateDate.text = repo.owner
      
         return cell

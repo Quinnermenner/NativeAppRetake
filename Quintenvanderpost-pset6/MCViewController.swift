@@ -142,7 +142,6 @@ class MCViewController: UIViewController, UITextFieldDelegate {
             let messageUID = self.user.uid + "-" + String(describing: postCount)
             let message = Message.init(author: userName, text: text, date: date)
             
-//            self.messageRef?.updateChildValues([messageUID : message.toAnyObject()])
             let uniqueMessageRef = self.messageRef?.child(messageUID)
             uniqueMessageRef?.setValue(message.toAnyObject())
             self.userRef.updateChildValues(["PostCount" : postCount + 1])
