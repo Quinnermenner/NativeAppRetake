@@ -24,11 +24,14 @@ class MCViewController: UIViewController {
    
     @IBOutlet weak var tableView: UITableView!
     @IBOutlet weak var messageTextField: UITextField!
+    @IBOutlet weak var bottomConstraint: NSLayoutConstraint!
 
     override func viewDidLoad() {
         super.viewDidLoad()
         tableView.dataSource = self
         tableView.delegate = self
+        
+        self.title = repo.name
         
         commitRef = repo.ref?.child("commits")
         messageRef = repo.ref?.child("messages")
@@ -93,9 +96,18 @@ class MCViewController: UIViewController {
             tableCellList.append(message)
         }
         self.tableCellList = tableCellList.sorted(by: {$0.date < $1.date})
-        self.tableView.reloadData()
+        DispatchQueue.main.async {
+            self.tableView.reloadData()
+            self.scrollToLastRow()
+        }
         
-
+        
+    }
+    
+    func scrollToLastRow() {
+        let indexPath = NSIndexPath(row: self.tableCellList.count - 1, section: 0)
+            
+        self.tableView.scrollToRow(at: indexPath as IndexPath, at: .bottom, animated: true)
     }
     
     func hideKeyboard() {
@@ -130,6 +142,8 @@ class MCViewController: UIViewController {
             
             self.messageRef?.updateChildValues([messageUID : message.toAnyObject()])
             self.userRef.updateChildValues(["PostCount" : postCount + 1])
+            self.messageTextField.text = ""
+            self.messageTextField.resignFirstResponder()
         })
 
         
@@ -148,16 +162,23 @@ class MCViewController: UIViewController {
     
     func keyboardWillShow(notification: NSNotification) {
         if let keyboardSize = (notification.userInfo?[UIKeyboardFrameBeginUserInfoKey] as? NSValue)?.cgRectValue {
-            if self.view.frame.origin.y == 0{
-                self.view.frame.origin.y -= keyboardSize.height
+            if self.bottomConstraint.constant < keyboardSize.height{
+                UIView.animate(withDuration: 1, animations: {
+                    self.bottomConstraint.constant += keyboardSize.height
+                    self.view.layoutIfNeeded()
+                    self.scrollToLastRow()
+                })
             }
         }
     }
     
     func keyboardWillHide(notification: NSNotification) {
         if let keyboardSize = (notification.userInfo?[UIKeyboardFrameBeginUserInfoKey] as? NSValue)?.cgRectValue {
-            if self.view.frame.origin.y != 0 {
-                self.view.frame.origin.y += keyboardSize.height
+            if self.bottomConstraint.constant >= keyboardSize.height {
+                UIView.animate(withDuration: 0.5, animations: {
+                    self.bottomConstraint.constant -= keyboardSize.height
+                    self.view.layoutIfNeeded()
+                })
             }
         }
     }

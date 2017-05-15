@@ -34,6 +34,8 @@ class RepoController: UITableViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        self.title = "Your Repositories"
+        
         constructMenu()
         
         let button = UIBarButtonItem(image: UIImage(named: "options"), style: .plain, target: self, action: #selector(RepoController.showDropdown))
