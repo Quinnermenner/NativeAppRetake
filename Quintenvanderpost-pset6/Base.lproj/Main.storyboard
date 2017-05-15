@@ -305,27 +305,30 @@
                                     <autoresizingMask key="autoresizingMask"/>
                                     <subviews>
                                         <stackView opaque="NO" contentMode="scaleToFill" axis="vertical" translatesAutoresizingMaskIntoConstraints="NO" id="IJ2-bY-PTA">
-                                            <rect key="frame" x="0.0" y="0.0" width="375" height="44"/>
+                                            <rect key="frame" x="4" y="4" width="367" height="35.5"/>
                                             <subviews>
-                                                <stackView opaque="NO" contentMode="scaleToFill" distribution="fillProportionally" translatesAutoresizingMaskIntoConstraints="NO" id="OhY-no-BYE">
-                                                    <rect key="frame" x="0.0" y="0.0" width="375" height="20.5"/>
+                                                <stackView opaque="NO" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="OhY-no-BYE">
+                                                    <rect key="frame" x="0.0" y="0.0" width="367" height="15"/>
                                                     <subviews>
                                                         <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Label" textAlignment="natural" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="HIa-xx-Mdg">
-                                                            <rect key="frame" x="0.0" y="0.0" width="352.5" height="20.5"/>
+                                                            <rect key="frame" x="0.0" y="0.0" width="183.5" height="15"/>
                                                             <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                                             <nil key="textColor"/>
                                                             <nil key="highlightedColor"/>
                                                         </label>
                                                         <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Label" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="QDl-Uy-Bas">
-                                                            <rect key="frame" x="352.5" y="0.0" width="22.5" height="20.5"/>
+                                                            <rect key="frame" x="183.5" y="0.0" width="183.5" height="15"/>
                                                             <fontDescription key="fontDescription" type="system" pointSize="9"/>
                                                             <nil key="textColor"/>
                                                             <nil key="highlightedColor"/>
                                                         </label>
                                                     </subviews>
+                                                    <constraints>
+                                                        <constraint firstAttribute="trailing" secondItem="QDl-Uy-Bas" secondAttribute="trailing" id="kwo-dP-cM2"/>
+                                                    </constraints>
                                                 </stackView>
                                                 <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Label" textAlignment="natural" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Ll7-7S-0oT">
-                                                    <rect key="frame" x="0.0" y="20.5" width="375" height="23.5"/>
+                                                    <rect key="frame" x="0.0" y="15" width="367" height="20.5"/>
                                                     <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                                     <nil key="textColor"/>
                                                     <nil key="highlightedColor"/>
@@ -334,10 +337,10 @@
                                         </stackView>
                                     </subviews>
                                     <constraints>
-                                        <constraint firstItem="IJ2-bY-PTA" firstAttribute="top" secondItem="N0l-cK-BEs" secondAttribute="top" id="62k-Rl-AJr"/>
-                                        <constraint firstItem="IJ2-bY-PTA" firstAttribute="leading" secondItem="N0l-cK-BEs" secondAttribute="leading" id="Isd-Cs-iDN"/>
-                                        <constraint firstAttribute="trailing" secondItem="IJ2-bY-PTA" secondAttribute="trailing" id="ayv-2a-m1y"/>
-                                        <constraint firstAttribute="bottom" secondItem="IJ2-bY-PTA" secondAttribute="bottom" id="zrx-DV-wk7"/>
+                                        <constraint firstItem="IJ2-bY-PTA" firstAttribute="top" secondItem="N0l-cK-BEs" secondAttribute="top" constant="4" id="62k-Rl-AJr"/>
+                                        <constraint firstItem="IJ2-bY-PTA" firstAttribute="leading" secondItem="N0l-cK-BEs" secondAttribute="leading" constant="4" id="Isd-Cs-iDN"/>
+                                        <constraint firstAttribute="trailing" secondItem="IJ2-bY-PTA" secondAttribute="trailing" constant="4" id="ayv-2a-m1y"/>
+                                        <constraint firstAttribute="bottom" secondItem="IJ2-bY-PTA" secondAttribute="bottom" constant="4" id="zrx-DV-wk7"/>
                                     </constraints>
                                 </tableViewCellContentView>
                                 <connections>

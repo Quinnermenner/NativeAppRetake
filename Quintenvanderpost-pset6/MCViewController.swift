@@ -9,8 +9,9 @@
 import UIKit
 import Firebase
 import SwiftyJSON
+import SafariServices
 
-class MCViewController: UIViewController {
+class MCViewController: UIViewController, UITextFieldDelegate {
     
     // MARK: Initializers
     var repo: Repo!
@@ -30,6 +31,7 @@ class MCViewController: UIViewController {
         super.viewDidLoad()
         tableView.dataSource = self
         tableView.delegate = self
+        messageTextField.delegate = self
         
         self.title = repo.name
         
@@ -151,16 +153,25 @@ class MCViewController: UIViewController {
 
         
     }
+    
+    func textFieldShouldReturn(_ textField: UITextField) -> Bool {
+        self.postMessage()
+        return true
+    }
 
     @IBAction func postButtonDidTouch(_ sender: Any) {
+        
+        self.postMessage()
+    }
+    
+    func postMessage() {
+        
         let stringFromDate = Date().iso8601    // "2017-03-22T13:22:13.933Z"
         let messageText = messageTextField.text!
         
         if messageText != "" {
             saveMessage(text: messageText, date: stringFromDate, uid: user.uid)
         }
-        
-
     }
     
     func keyboardWillShow(notification: NSNotification) {
@@ -183,6 +194,18 @@ class MCViewController: UIViewController {
                     self.view.layoutIfNeeded()
                 })
             }
+        }
+    }
+    
+    func showCommit(_ index: Int) {
+        
+        let commit = self.tableCellList[index] as! Commit
+        let sha = commit.sha
+        let owner = repo.owner
+        let name = repo.name
+        if let url = URL(string: "https://github.com/\(owner)/\(name)/commit/\(sha)") {
+            let vc = SFSafariViewController(url: url, entersReaderIfAvailable: true)
+            present(vc, animated: true)
         }
     }
     
@@ -212,6 +235,33 @@ extension MCViewController: UITableViewDataSource, UITableViewDelegate {
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return tableCellList.count
+    }
+    
+    func tableView(_ tableView: UITableView, canEditRowAt indexPath: IndexPath) -> Bool {
+        if tableCellList[indexPath.row] is Commit {
+            return true
+        } else {
+            return false
+        }
+    }
+    
+    func tableView(_ tableView: UITableView, editActionsForRowAt indexPath: IndexPath) -> [UITableViewRowAction]?
+    {
+        let inspect = UITableViewRowAction(style: .normal, title: "Inspect Commit") { (action, indexPath) in
+            tableView.isEditing = false
+            self.showCommit(indexPath.row)
+            
+        }
+        inspect.backgroundColor = UIColor.gray
+        
+        
+        return [inspect]
+    }
+    
+    func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCellEditingStyle, forRowAt indexPath: IndexPath) {
+        if editingStyle == .delete {
+            
+        }
     }
     
     
