@@ -32,6 +32,8 @@ class AccountDetailsViewController: UIViewController, UITextFieldDelegate {
         
         self.title = "Account Details"
         self.navigationItem.backBarButtonItem?.title = "Repos"
+        
+        // Get current user information.
         userRef.observeSingleEvent(of: .value, with: { (snapshot) in
             // Get user value
             let value = snapshot.value as? NSDictionary
@@ -39,6 +41,7 @@ class AccountDetailsViewController: UIViewController, UITextFieldDelegate {
             self.nickName.text = self.nicknameText
         })
         
+        // Set delegates and tags
         nickName.delegate = self
         nickName.tag = 0
         
@@ -48,13 +51,12 @@ class AccountDetailsViewController: UIViewController, UITextFieldDelegate {
         newPassword.delegate = self
         newPassword.tag = 2
         
-        
+        // Tapgesture to dismiss keyboard when clicking in scrollView.
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(AccountDetailsViewController.hideKeyboard))
         tapGesture.cancelsTouchesInView = true
         scrollView.addGestureRecognizer(tapGesture)
         
-        
-        
+        // Observers to change constraints when keyboard shows and hides.
         NotificationCenter.default.addObserver(self, selector: #selector(AccountDetailsViewController.keyboardWillShow), name: NSNotification.Name.UIKeyboardWillShow, object: nil)
         
         NotificationCenter.default.addObserver(self, selector: #selector(AccountDetailsViewController.keyboardWillHide), name: NSNotification.Name.UIKeyboardWillHide, object: nil)
@@ -62,7 +64,9 @@ class AccountDetailsViewController: UIViewController, UITextFieldDelegate {
         // Do any additional setup after loading the view.
     }
     
+    // Different actions for different textFields. (No different actions yet, but perhaps someday)
     func textFieldDidBeginEditing(_ textField: UITextField) {
+        
         self.activeTextField = textField
         switch textField.tag {
         case 0:
@@ -76,6 +80,7 @@ class AccountDetailsViewController: UIViewController, UITextFieldDelegate {
         }
     }
     
+    // Different actions for when different textFields lose focus.
     func textFieldDidEndEditing(_ textField: UITextField) {
         
         switch textField.tag {
@@ -99,7 +104,9 @@ class AccountDetailsViewController: UIViewController, UITextFieldDelegate {
         }
     }
     
+    
     func textFieldShouldBeginEditing(_ textField: UITextField) -> Bool {
+        
         self.activeTextField = textField
         return true
     }
@@ -111,11 +118,13 @@ class AccountDetailsViewController: UIViewController, UITextFieldDelegate {
     }
     
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {
+        
         self.activeTextField = textField
         self.doneButtonTapped()
         return true
     }
     
+    // Different actions for different textfields done editing.
     func doneButtonTapped() {
         
         switch self.activeTextField.tag {
@@ -152,17 +161,21 @@ class AccountDetailsViewController: UIViewController, UITextFieldDelegate {
                 self.currentPassword.text = ""
                 self.activeTextField.resignFirstResponder()
             } else {
+                
+                // Alert when reauthentication fails.
                 let alert = UIAlertController(title: "Oops!",
                                               message: "Incorrect password.",
                                               preferredStyle: .alert)
                 alert.addAction(UIAlertAction(title: "Continue", style: .default) {_ in
+                    
                     self.currentPassword.becomeFirstResponder()
                     self.newPassword.text = newPassword
                 })
-                self.present(alert,animated: true, completion: nil)
                 
+                self.present(alert,animated: true, completion: nil)
             }
         } else {
+            // Alert when new password cannot be set.
             let alert = UIAlertController(title: "Oops!",
                                           message: "That password is not allowed.",
                                           preferredStyle: .alert)
@@ -184,7 +197,6 @@ class AccountDetailsViewController: UIViewController, UITextFieldDelegate {
         var success = false
         curUser?.reauthenticate(with: credential) { error in
             if let error = error {
-                
                 print(error)
             } else {
                 success = true
@@ -197,23 +209,24 @@ class AccountDetailsViewController: UIViewController, UITextFieldDelegate {
         
         self.nicknameText = newNickname
         DispatchQueue.main.async {
+            
             self.userRef.child("Nickname").setValue(newNickname)
             
             self.userRef.observeSingleEvent(of: .value, with: { (snapshot) in
+                
                 // Get user value
                 let value = snapshot.value as? NSDictionary
                 let nick = value?["Nickname"] as? String ?? self.nicknameText
                 if let messages = value?["messages"] as? NSDictionary {
                     for (_, messageRef) in messages {
+                        
                         let ref = FIRDatabase.database().reference(fromURL: String(describing: messageRef))
                         ref.child("author").setValue(nick)
                     }
                 }
                 
             }) { (error) in
-                let alert = UIAlertController(title: "Oops!",
-                                              message: "Could not update your nickname. Please contact your database manager.",
-                                              preferredStyle: .alert)
+                let alert = UIAlertController(title: "Oops!", message: "Could not update your nickname. Please contact your database manager.", preferredStyle: .alert)
                 alert.addAction(UIAlertAction(title: "Continue", style: .default))
                 self.present(alert,animated: true, completion: nil)
                 print(error.localizedDescription)
@@ -221,6 +234,7 @@ class AccountDetailsViewController: UIViewController, UITextFieldDelegate {
         }
     }
     
+    // Create buttons in navigation bar when editing.
     func constructEditButtons() {
         
         let cancelButton = UIBarButtonItem(title: "Cancel", style: .plain, target: self, action: #selector(self.cancelButtonTapped))
@@ -230,6 +244,7 @@ class AccountDetailsViewController: UIViewController, UITextFieldDelegate {
         self.navigationItem.setRightBarButton(doneButton, animated: true)
     }
     
+    // Remove buttons in naviagation bar when done editing.
     func deconstructEditButtons() {
         
         self.navigationItem.leftBarButtonItem = nil
@@ -271,18 +286,6 @@ class AccountDetailsViewController: UIViewController, UITextFieldDelegate {
 
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
-        // Dispose of any resources that can be recreated.
     }
     
-
-    /*
-    // MARK: - Navigation
-
-    // In a storyboard-based application, you will often want to do a little preparation before navigation
-    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        // Get the new view controller using segue.destinationViewController.
-        // Pass the selected object to the new view controller.
-    }
-    */
-
 }

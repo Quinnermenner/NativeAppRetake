@@ -23,12 +23,16 @@ class MCViewController: UIViewController, UITextFieldDelegate {
     var messages = [Message]()
     var tableCellList = [MessageCommitProtocol]()
    
+    
+    // MARK: Outlets
     @IBOutlet weak var tableView: UITableView!
     @IBOutlet weak var messageTextField: UITextField!
     @IBOutlet weak var bottomConstraint: NSLayoutConstraint!
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        // Set delegates
         tableView.dataSource = self
         tableView.delegate = self
         messageTextField.delegate = self
@@ -38,8 +42,11 @@ class MCViewController: UIViewController, UITextFieldDelegate {
         commitRef = repo.ref?.child("commits")
         messageRef = repo.ref?.child("messages")
         
+        
+        // Make sure commits are up to date.
         updateCommits()
         
+        // Listen for new commits and update tableView when necessary.
         commitRef.observe(.value, with: { snapshot in
             var commitList: [Commit] = []
             for item in snapshot.children {
@@ -50,6 +57,7 @@ class MCViewController: UIViewController, UITextFieldDelegate {
             self.constructTableViewCells(commitList: self.commits, messageList: self.messages)
         })
         
+        // Listen for new messages and update tableView whe nnecessary.
         messageRef.observe(.value, with: { (snapshot) in
             var messageList : [Message] = []
             for item in snapshot.children {
@@ -60,28 +68,34 @@ class MCViewController: UIViewController, UITextFieldDelegate {
             self.constructTableViewCells(commitList: self.commits, messageList: self.messages)
         })
         
+        // Tapgesture to dismiss keyboard when table is tapped.
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(MCViewController.hideKeyboard))
         tapGesture.cancelsTouchesInView = true
         tableView.addGestureRecognizer(tapGesture)        
         
+        // Placeholder values for tableView
         tableView.rowHeight = UITableViewAutomaticDimension
         tableView.estimatedRowHeight = 60
     }
     
     override func viewWillAppear(_ animated: Bool) {
+        // Allows for constraint update when keyboard shows and hides.
         NotificationCenter.default.addObserver(self, selector: #selector(MCViewController.keyboardWillShow), name: NSNotification.Name.UIKeyboardWillShow, object: nil)
         
         NotificationCenter.default.addObserver(self, selector: #selector(MCViewController.keyboardWillHide), name: NSNotification.Name.UIKeyboardWillHide, object: nil)
     }
     
     override func viewWillDisappear(_ animated: Bool) {
+        // Dismisses observers to preven weird messages.
         NotificationCenter.default.removeObserver(self, name: NSNotification.Name.UIKeyboardWillShow, object: nil)
         NotificationCenter.default.removeObserver(self, name: NSNotification.Name.UIKeyboardWillHide, object: nil)
     }
     
     // MARK: Functions
+    
     func gitCommit(owner: String, repoName: String) -> JSON {
         
+        // Gets a list of commits from github for specified repo. Returns commits in json format.
         let url = URL(string: "https://api.github.com/repos/\(owner)/\(repoName)/commits")!
         let data = try? Data(contentsOf: url)
         let json = JSON(data: data!)
@@ -98,7 +112,9 @@ class MCViewController: UIViewController, UITextFieldDelegate {
         for message in messageList {
             tableCellList.append(message)
         }
+        // Sort cells by creation date.
         self.tableCellList = tableCellList.sorted(by: {$0.date < $1.date})
+        
         DispatchQueue.main.async {
             self.tableView.reloadData()
             self.scrollToLastRow()
@@ -107,17 +123,22 @@ class MCViewController: UIViewController, UITextFieldDelegate {
         
     }
     
+    // Focus on bottom cell.
     func scrollToLastRow() {
+        
         let indexPath = NSIndexPath(row: self.tableCellList.count - 1, section: 0)
             
         self.tableView.scrollToRow(at: indexPath as IndexPath, at: .bottom, animated: true)
     }
     
     func hideKeyboard() {
+        
         self.view.endEditing(true)
     }
-    
+
+    // Gets the commits and updates the database with new commits.
     func updateCommits() {
+        
         let commitJsons = gitCommit(owner: repo.owner, repoName: repo.name)
         for (_, subJson):(String, JSON) in commitJsons {
             let author = subJson["commit"]["committer"]["name"].stringValue
@@ -134,6 +155,7 @@ class MCViewController: UIViewController, UITextFieldDelegate {
         }
     }
     
+    // Saves a message to the database to present in everyones tableViews.
     func saveMessage(text: String, date: String, uid: String) {
 
         userRef.observeSingleEvent(of: .value, with: { (snapshot) in
@@ -150,11 +172,10 @@ class MCViewController: UIViewController, UITextFieldDelegate {
             self.messageTextField.text = ""
             self.messageTextField.resignFirstResponder()
         })
-
-        
     }
     
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {
+        
         self.postMessage()
         return true
     }
@@ -197,6 +218,7 @@ class MCViewController: UIViewController, UITextFieldDelegate {
         }
     }
     
+    // Shows the commit details in a safari inapp browser view.
     func showCommit(_ index: Int) {
         
         let commit = self.tableCellList[index] as! Commit
@@ -214,16 +236,6 @@ class MCViewController: UIViewController, UITextFieldDelegate {
         // Dispose of any resources that can be recreated.
     }
     
-
-    /*
-    // MARK: - Navigation
-
-    // In a storyboard-based application, you will often want to do a little preparation before navigation
-    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        // Get the new view controller using segue.destinationViewController.
-        // Pass the selected object to the new view controller.
-    }
-    */
 
 }
 
@@ -258,13 +270,7 @@ extension MCViewController: UITableViewDataSource, UITableViewDelegate {
         return [inspect]
     }
     
-    func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCellEditingStyle, forRowAt indexPath: IndexPath) {
-        if editingStyle == .delete {
-            
-        }
-    }
-    
-    
+    // Tableview with two types of cells.
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
 
         if let commit = tableCellList[indexPath.row] as? Commit {

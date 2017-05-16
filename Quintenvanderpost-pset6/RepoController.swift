@@ -36,14 +36,16 @@ class RepoController: UITableViewController {
         
         self.title = "Your Repositories"
         
-        constructMenu()
-        
+        // Construct dropdown menu and button
+        self.constructMenu()
         let button = UIBarButtonItem(image: UIImage(named: "options"), style: .plain, target: self, action: #selector(RepoController.showDropdown))
         navigationItem.leftBarButtonItem = button
         
+        // Initialize User info
         let userID = FIRAuth.auth()?.currentUser?.uid
         self.userRef = baseRef.child("users").child(userID!)
         
+        // Listener event for online users.
         FIRAuth.auth()!.addStateDidChangeListener { auth, user in
             guard let user = user else { return }
             self.user = User(authData: user)
@@ -71,6 +73,8 @@ class RepoController: UITableViewController {
                 })
             }
         })
+        
+        // Placeholder values for tableView
         tableView.rowHeight = UITableViewAutomaticDimension
         tableView.estimatedRowHeight = 60
     }
@@ -79,6 +83,7 @@ class RepoController: UITableViewController {
     
     func gitRepoSearch(owner: String, name: String) -> JSON {
         
+        // Search git for specified repository and return data as json.
         let url = URL(string: "https://api.github.com/search/repositories?q=\(owner)/\(name)")!
         let data = try? Data(contentsOf: url)
         let json = JSON(data: data!)
@@ -86,7 +91,9 @@ class RepoController: UITableViewController {
         return json
     }
     
+    // Adds a github repository or alerts if no matching/alike repository is found.
     @IBAction func addButtonDidTouch(_ sender: AnyObject) {
+        
         let notFoundAlert = UIAlertController(title: "Oops!",
                                               message: "Could not find specified repository. :(",
                                               preferredStyle: .alert)
@@ -94,6 +101,7 @@ class RepoController: UITableViewController {
         let alert = UIAlertController(title: "Git Repo",
                                       message: "Add a repository",
                                       preferredStyle: .alert)
+        
         alert.addTextField { (textField) in
             textField.placeholder = "Github Repo Owner"
         }
@@ -106,13 +114,15 @@ class RepoController: UITableViewController {
         
         let saveAction = UIAlertAction(title: "Add", style: .default) { _ in
             guard gitOwner.text != nil, gitRepo.text != nil else { return }
-            // TODO: Implement GitAPI and make classes
 
             let repoJson = self.gitRepoSearch(owner: gitOwner.text!, name: gitRepo.text!)
+            // If json is empty no repo was found.
             guard repoJson["total_count"] != 0 else {
+                
                 self.present(notFoundAlert, animated: true, completion: nil)
                 return
             }
+            
             let name = repoJson["items"][0]["name"].stringValue
             let description = repoJson["items"][0]["description"].stringValue
             let owner = repoJson["items"][0]["owner"]["login"].stringValue
@@ -123,10 +133,14 @@ class RepoController: UITableViewController {
                                         
             let repo = Repo(name: name, description: description, owner: owner, url: url, updateDate: updateDate, id: id)
 
+            // If repo was already in database, no database adding is required.
             self.ref.child(stringID).observeSingleEvent(of: .value, with: { (snapshot) in
                 if snapshot.exists() == false {
+                    
                     self.ref.updateChildValues([stringID : (repo.toAnyObject())])
                 }
+                
+                // Update users saved repos.
                 self.userRef.child("savedRepos/\(stringID)").setValue(true)
             })
             
@@ -138,6 +152,7 @@ class RepoController: UITableViewController {
         let abortAction = UIAlertAction(title: "Abort",
                                         style: .default)
         
+        // If repo was not found; allow for another try at searching without losing textfields.
         let retryAction = UIAlertAction(title: "Retry", style: .default) { _ in guard gitOwner.text != nil, gitRepo.text != nil else { return }
             alert.textFields![0].text = gitOwner.text
             alert.textFields![1].text = gitRepo.text
@@ -163,6 +178,8 @@ class RepoController: UITableViewController {
         performSegue(withIdentifier: "segueToLoginController", sender: nil)
     }
     
+    
+    // Constructs a dropdown menu.
     func constructMenu() {
         
         menu = AZDropdownMenu(titles: titles)
@@ -203,11 +220,14 @@ class RepoController: UITableViewController {
     }
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        
         let cell = repoTable.dequeueReusableCell(withIdentifier: "RepoCell", for: indexPath) as! RepoCell
         let repo = repos[indexPath.row]
      
         cell.name.text = repo.name
         cell.name.font = UIFont.boldSystemFont(ofSize: 16.0)
+        
+        // Add placeholder dashes for empty descriptions.
         if repo.description != "" {
             cell.repoDescription.text = repo.description
         } else {
@@ -229,6 +249,7 @@ class RepoController: UITableViewController {
     
 
     override func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCellEditingStyle, forRowAt indexPath: IndexPath) {
+        
         if editingStyle == .delete {
             let repo = repos[indexPath.row]
             let repoID = repo.id
@@ -237,49 +258,30 @@ class RepoController: UITableViewController {
     }
     
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        
         let selectedRow = repoTable.indexPathForSelectedRow
         performSegue(withIdentifier: "segueToMCController", sender: selectedRow)
     }
     
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        
         if segue.identifier == "segueToMCController" {
+            
             let indexPath = self.repoTable.indexPathForSelectedRow
             let repo = repos[(indexPath?.row)!]
             let destination = segue.destination as! MCViewController
+            
             destination.repo = repo
             destination.user = self.user
             destination.userRef = self.userRef
         }
         else if segue.identifier == "segueToAccountDetailsViewController" {
+            
             let destination = segue.destination as! AccountDetailsViewController
+            
             destination.user = self.user
             destination.userRef = self.userRef
         }
     }
-    
-    /*
-    // Override to support rearranging the table view.
-    override func tableView(_ tableView: UITableView, moveRowAt fromIndexPath: IndexPath, to: IndexPath) {
-
-    }
-    */
-
-    /*
-    // Override to support conditional rearranging of the table view.
-    override func tableView(_ tableView: UITableView, canMoveRowAt indexPath: IndexPath) -> Bool {
-        // Return false if you do not want the item to be re-orderable.
-        return true
-    }
-    */
-
-    /*
-    // MARK: - Navigation
-
-    // In a storyboard-based application, you will often want to do a little preparation before navigation
-    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        // Get the new view controller using segue.destinationViewController.
-        // Pass the selected object to the new view controller.
-    }
-    */
 
 }

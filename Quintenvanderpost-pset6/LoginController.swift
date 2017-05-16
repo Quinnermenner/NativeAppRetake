@@ -18,8 +18,14 @@ class LoginController: UIViewController, UITextFieldDelegate  {
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        
         loginPass.delegate = self
         loginPass.tag = 0
+        
+        loginEmail.delegate = self
+        loginEmail.tag = 1
+        
+        // Listener that segues to repos when user is logged in.
         FIRAuth.auth()!.addStateDidChangeListener() { auth, user in
             if user != nil {
                 self.performSegue(withIdentifier: "segueLogin", sender: nil)
@@ -43,34 +49,69 @@ class LoginController: UIViewController, UITextFieldDelegate  {
     }
     
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {
-        textField.resignFirstResponder()
-        if textField.tag == 0 {
+        
+        
+        // Only tag 0 should perform login action.
+        switch textField.tag {
+        case 0:
             loginDidTouch(self)
+            textField.resignFirstResponder()
+        case 1:
+            loginPass.becomeFirstResponder()
+        default:
+            return true
         }
-        loginDidTouch(self)
+        
         return true
+    }
+    
+    func registerUser(email: String, password: String) {
+        
+        FIRAuth.auth()!.createUser(withEmail: email, password: password) { user, error in
+            if error == nil {
+                let ref : FIRDatabaseReference!
+                ref = FIRDatabase.database().reference()
+                ref.child("users").child(user!.uid).setValue([
+                    "Email": email,
+                    "Nickname": email,
+                    "Repos": [],
+                    "PostCount": 0])
+                self.loginUser(login: email, password: password)
+            } else {
+                let alert = UIAlertController(title: "Oops!",
+                                              message: "These credentials are not allowed.",
+                                              preferredStyle: .alert)
+                alert.addAction(UIAlertAction(title: "Continue", style: .default))
+                self.present(alert,animated: true, completion: nil)
+            }
+        }
     }
     
     func loginUser(login: String, password: String) {
         
-        FIRAuth.auth()!.signIn(withEmail: login,
-                               password: password) { (user, error) in
-                                let alert = UIAlertController(title: "Oops!",
-                                                              message: "This combination of login and password does not match any user in the database.",
-                                                              preferredStyle: .alert)
-                                alert.addAction(UIAlertAction(title: "Continue", style: .default))
-                                self.present(alert,animated: true, completion: nil)
+        // Perform login to database and alert if anything goes wrong.
+        FIRAuth.auth()!.signIn(withEmail: login, password: password) { (user, error) in
+            let alert = UIAlertController(title: "Oops!",
+                                          message: "This combination of login and password does not match any user in the database.",
+                                          preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: "Continue", style: .default))
+            self.present(alert,animated: true, completion: nil)
         }
     }
     
     @IBAction func loginDidTouch(_ sender: AnyObject) {
+        
         self.loginUser(login: loginEmail.text!, password: loginPass.text!)
     }
     
     @IBAction func registerDidTouch(_ sender: AnyObject) {
+        
+        // Start register procedure.
         let alert = UIAlertController(title: "Registration",
                                       message: "Register a new account",
                                       preferredStyle: .alert)
+        
+        // Textfields for user information.
         alert.addTextField { (textField) in
             textField.placeholder = "User Email"
         }
@@ -78,39 +119,17 @@ class LoginController: UIViewController, UITextFieldDelegate  {
             textField.placeholder = "Password"
             textField.isSecureTextEntry = true
         }
+        
         let emailField = alert.textFields![0]
         let passwordField = alert.textFields![1]
         
-        
         let saveAction = UIAlertAction(title: "Add", style: .default) { _ in
             guard emailField.text != nil, passwordField.text != nil else { return }
-                // TODO: Implement GitAPI and make classes
-                FIRAuth.auth()!.createUser(withEmail: emailField.text!,
-                                           password: passwordField.text!) { user, error in
-                                                if error == nil {
-                                                let ref : FIRDatabaseReference!
-                                                ref = FIRDatabase.database().reference()
-                                                ref.child("users").child(user!.uid).setValue([
-                                                        "Email": emailField.text!,
-                                                        "Nickname": emailField.text!,
-                                                        "Repos": [],
-                                                        "PostCount": 0])
-                                                self.loginUser(login: emailField.text!, password: passwordField.text!)
-                                                } else {
-                                                    let alert = UIAlertController(title: "Oops!",
-                                                                                  message: "These credentials are not allowed.",
-                                                                                  preferredStyle: .alert)
-                                                    alert.addAction(UIAlertAction(title: "Continue", style: .default))
-                                                    self.present(alert,animated: true, completion: nil)
-                                            }
-                                        }
-                                       
+                self.registerUser(email: emailField.text!, password: passwordField.text!)
         }
         
-        let cancelAction = UIAlertAction(title: "Cancel",
-                                         style: .default)
+        let cancelAction = UIAlertAction(title: "Cancel", style: .default)
 
-    
         alert.addAction(saveAction)
         alert.addAction(cancelAction)
         
