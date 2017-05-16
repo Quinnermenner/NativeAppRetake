@@ -1,4 +1,4 @@
-App Name as Headline
+NativeAppStudio - Git Commit Handler by Quinten van der Post - 10272380
 ======
 **Git Commit Handler** is an app for keeping track of your favourite git repositories. It functions as a discussion board and commit tracker so you can stay up to date and fully comprehend all of the fantastic commits your co-workers push to their/your project.
 
@@ -38,7 +38,7 @@ App Name as Headline
     * You can swipe a commit and click "Inspect Commit" to view a specific commit on githubs own website.
     * At the bottom of the view you find a text field where you can write and post a message about this specific repository. 
 
-\* - Only public repositories are currently supported.
+\*  Only public repositories are currently supported.
 
 ## Future releases
 
