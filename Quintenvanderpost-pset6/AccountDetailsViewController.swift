@@ -123,7 +123,11 @@ class AccountDetailsViewController: UIViewController, UITextFieldDelegate {
             if let newNickname = activeTextField.text, newNickname != ""{
                 updateNickname(newNickname: newNickname)
             } else {
-//                Throw an alert!!
+                let alert = UIAlertController(title: "Oops!",
+                                              message: "You cannot have that nickname.",
+                                              preferredStyle: .alert)
+                alert.addAction(UIAlertAction(title: "Continue", style: .default))
+                self.present(alert,animated: true, completion: nil)
             }
             self.activeTextField.resignFirstResponder()
         case 1:
@@ -137,28 +141,50 @@ class AccountDetailsViewController: UIViewController, UITextFieldDelegate {
     
     func updatePassword(newPassword: String) {
         
-        if reauthUser() {
-            
-            FIRAuth.auth()?.currentUser?.updatePassword(newPassword) { (error) in
-                print("Could not update password")
+        let curPassword = self.currentPassword.text!
+        if newPassword != "" {
+            if reauthUser(curPassword: curPassword) {
+                
+                FIRAuth.auth()?.currentUser?.updatePassword(newPassword) { (error) in
+                    print("Could not update password")
+                }
+                self.newPassword.text = ""
+                self.currentPassword.text = ""
+                self.activeTextField.resignFirstResponder()
+            } else {
+                let alert = UIAlertController(title: "Oops!",
+                                              message: "Incorrect password.",
+                                              preferredStyle: .alert)
+                alert.addAction(UIAlertAction(title: "Continue", style: .default) {_ in
+                    self.currentPassword.becomeFirstResponder()
+                    self.newPassword.text = newPassword
+                })
+                self.present(alert,animated: true, completion: nil)
+                
             }
-            self.newPassword.text = ""
-            self.currentPassword.text = ""
-            self.activeTextField.resignFirstResponder()
+        } else {
+            let alert = UIAlertController(title: "Oops!",
+                                          message: "That password is not allowed.",
+                                          preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: "Continue", style: .default) {_ in
+                self.newPassword.becomeFirstResponder()
+                self.currentPassword.text = curPassword
+            })
+            self.present(alert,animated: true, completion: nil)
         }
         
     }
     
-    func reauthUser() -> Bool {
+    func reauthUser(curPassword: String) -> Bool {
         
         let curUser = FIRAuth.auth()?.currentUser
         var credential: FIRAuthCredential
         
-        credential = FIREmailPasswordAuthProvider.credential(withEmail: user.email, password: self.currentPassword.text!)
+        credential = FIREmailPasswordAuthProvider.credential(withEmail: user.email, password: curPassword)
         var success = false
         curUser?.reauthenticate(with: credential) { error in
             if let error = error {
-                print("Login credentials incorrect!")
+                
                 print(error)
             } else {
                 success = true
@@ -184,8 +210,12 @@ class AccountDetailsViewController: UIViewController, UITextFieldDelegate {
                     }
                 }
                 
-                // ...
             }) { (error) in
+                let alert = UIAlertController(title: "Oops!",
+                                              message: "Could not update your nickname. Please contact your database manager.",
+                                              preferredStyle: .alert)
+                alert.addAction(UIAlertAction(title: "Continue", style: .default))
+                self.present(alert,animated: true, completion: nil)
                 print(error.localizedDescription)
             }
         }

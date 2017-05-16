@@ -51,9 +51,20 @@ class LoginController: UIViewController, UITextFieldDelegate  {
         return true
     }
     
+    func loginUser(login: String, password: String) {
+        
+        FIRAuth.auth()!.signIn(withEmail: login,
+                               password: password) { (user, error) in
+                                let alert = UIAlertController(title: "Oops!",
+                                                              message: "This combination of login and password does not match any user in the database.",
+                                                              preferredStyle: .alert)
+                                alert.addAction(UIAlertAction(title: "Continue", style: .default))
+                                self.present(alert,animated: true, completion: nil)
+        }
+    }
+    
     @IBAction func loginDidTouch(_ sender: AnyObject) {
-        FIRAuth.auth()!.signIn(withEmail: loginEmail.text!,
-                               password: loginPass.text!)
+        self.loginUser(login: loginEmail.text!, password: loginPass.text!)
     }
     
     @IBAction func registerDidTouch(_ sender: AnyObject) {
@@ -77,7 +88,6 @@ class LoginController: UIViewController, UITextFieldDelegate  {
                 FIRAuth.auth()!.createUser(withEmail: emailField.text!,
                                            password: passwordField.text!) { user, error in
                                                 if error == nil {
-                                                // 3
                                                 let ref : FIRDatabaseReference!
                                                 ref = FIRDatabase.database().reference()
                                                 ref.child("users").child(user!.uid).setValue([
@@ -85,9 +95,14 @@ class LoginController: UIViewController, UITextFieldDelegate  {
                                                         "Nickname": emailField.text!,
                                                         "Repos": [],
                                                         "PostCount": 0])
-
-                                                FIRAuth.auth()!.signIn(withEmail: emailField.text!,password: passwordField.text!)
-                                                    }
+                                                self.loginUser(login: emailField.text!, password: passwordField.text!)
+                                                } else {
+                                                    let alert = UIAlertController(title: "Oops!",
+                                                                                  message: "These credentials are not allowed.",
+                                                                                  preferredStyle: .alert)
+                                                    alert.addAction(UIAlertAction(title: "Continue", style: .default))
+                                                    self.present(alert,animated: true, completion: nil)
+                                            }
                                         }
                                        
         }
@@ -96,9 +111,9 @@ class LoginController: UIViewController, UITextFieldDelegate  {
                                          style: .default)
 
     
-    alert.addAction(saveAction)
-    alert.addAction(cancelAction)
-    
-    present(alert, animated: true, completion: nil)
+        alert.addAction(saveAction)
+        alert.addAction(cancelAction)
+        
+        present(alert, animated: true, completion: nil)
     }
 }
