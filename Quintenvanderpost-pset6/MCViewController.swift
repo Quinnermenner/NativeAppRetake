@@ -40,34 +40,7 @@ class MCViewController: UIViewController, UITextFieldDelegate {
         
         self.title = repo?.name
         
-        commitRef = repo?.ref?.child("commits")
-        messageRef = repo?.ref?.child("messages")
-        
-        
-        // Make sure commits are up to date.
-        updateCommits()
-        
-        // Listen for new commits and update tableView when necessary.
-        commitRef?.observe(.value, with: { snapshot in
-            var commitList: [Commit] = []
-            for item in snapshot.children {
-                let commit = Commit(snapshot: item as! FIRDataSnapshot)
-                commitList.append(commit)
-            }
-            self.commits = commitList
-            self.constructTableViewCells(commitList: self.commits, messageList: self.messages)
-        })
-        
-        // Listen for new messages and update tableView whe nnecessary.
-        messageRef?.observe(.value, with: { (snapshot) in
-            var messageList : [Message] = []
-            for item in snapshot.children {
-                let message = Message.init(snapshot: item as! FIRDataSnapshot)
-                messageList.append(message)
-            }
-            self.messages = messageList
-            self.constructTableViewCells(commitList: self.commits, messageList: self.messages)
-        })
+        prepareTableView()
         
         // Tapgesture to dismiss keyboard when table is tapped.
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(MCViewController.hideKeyboard))
@@ -108,6 +81,36 @@ class MCViewController: UIViewController, UITextFieldDelegate {
         }
     }
     
+    func prepareTableView() {
+        
+        updateCommits()
+        
+        commitRef = repo?.ref?.child("commits")
+        messageRef = repo?.ref?.child("messages")
+        
+        // Listen for new commits and update tableView when necessary.
+        commitRef?.observe(.value, with: { snapshot in
+            var commitList: [Commit] = []
+            for item in snapshot.children {
+                let commit = Commit(snapshot: item as! FIRDataSnapshot)
+                commitList.append(commit)
+            }
+            self.commits = commitList
+            self.constructTableViewCells(commitList: self.commits, messageList: self.messages)
+        })
+        
+        // Listen for new messages and update tableView whe nnecessary.
+        messageRef?.observe(.value, with: { (snapshot) in
+            var messageList : [Message] = []
+            for item in snapshot.children {
+                let message = Message.init(snapshot: item as! FIRDataSnapshot)
+                messageList.append(message)
+            }
+            self.messages = messageList
+            self.constructTableViewCells(commitList: self.commits, messageList: self.messages)
+        })
+    }
+    
     func constructTableViewCells(commitList: [Commit], messageList: [Message]) {
         
         tableCellList = [MessageCommitProtocol]()
@@ -131,9 +134,11 @@ class MCViewController: UIViewController, UITextFieldDelegate {
     // Focus on bottom cell.
     func scrollToLastRow() {
         
-        let indexPath = NSIndexPath(row: self.tableCellList.count - 1, section: 0)
-            
-        self.tableView.scrollToRow(at: indexPath as IndexPath, at: .bottom, animated: true)
+        if self.tableCellList.count > 0 {
+            let indexPath = NSIndexPath(row: self.tableCellList.count - 1, section: 0)
+                
+            self.tableView.scrollToRow(at: indexPath as IndexPath, at: .bottom, animated: true)
+        }
     }
     
     func hideKeyboard() {
@@ -260,9 +265,7 @@ class MCViewController: UIViewController, UITextFieldDelegate {
     
     override func decodeRestorableState(with coder: NSCoder) {
         // Decode message text
-        print("can i even print here?")
         let saveMessageText = coder.decodeObject(forKey: "messageText") as? String
-        
         
         // Restore message.
         messageTextField.text = saveMessageText
@@ -284,7 +287,9 @@ class MCViewController: UIViewController, UITextFieldDelegate {
     
     override func applicationFinishedRestoringState() {
         
-        viewDidLoad()
+        // Restore vital elements for View.
+        self.title = repo?.name
+        prepareTableView()
     }
 
 }

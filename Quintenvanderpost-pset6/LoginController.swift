@@ -28,7 +28,7 @@ class LoginController: UIViewController, UITextFieldDelegate  {
         loginEmail.delegate = self
         loginEmail.tag = 1
         
-        // Listener that segues to repos when user is logged in.
+        // Listener that segues to repos if user is already logged in.
         FIRAuth.auth()?.addStateDidChangeListener() { auth, user in
             if user != nil && self.navigationController?.visibleViewController == self {
                 self.performSegue(withIdentifier: "segueLogin", sender: nil)
@@ -100,6 +100,10 @@ class LoginController: UIViewController, UITextFieldDelegate  {
                                               preferredStyle: .alert)
                 alert.addAction(UIAlertAction(title: "Continue", style: .default))
                 self.present(alert,animated: true, completion: nil)
+            } else {
+                
+                // Perform segue on successful login.
+                self.performSegue(withIdentifier: "segueLogin", sender: self)
             }
         }
     }

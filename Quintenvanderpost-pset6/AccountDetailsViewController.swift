@@ -60,8 +60,6 @@ class AccountDetailsViewController: UIViewController, UITextFieldDelegate {
         NotificationCenter.default.addObserver(self, selector: #selector(AccountDetailsViewController.keyboardWillShow), name: NSNotification.Name.UIKeyboardWillShow, object: nil)
         
         NotificationCenter.default.addObserver(self, selector: #selector(AccountDetailsViewController.keyboardWillHide), name: NSNotification.Name.UIKeyboardWillHide, object: nil)
-
-        // Do any additional setup after loading the view.
     }
     
     // Different actions for different textFields. (No different actions yet, but perhaps someday)
@@ -79,6 +77,7 @@ class AccountDetailsViewController: UIViewController, UITextFieldDelegate {
             print("This is not a textfield")
         }
     }
+    
     
     // Different actions for when different textFields lose focus.
     func textFieldDidEndEditing(_ textField: UITextField) {
@@ -286,6 +285,48 @@ class AccountDetailsViewController: UIViewController, UITextFieldDelegate {
 
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
+    }
+    
+    override func encodeRestorableState(with coder: NSCoder) {
+        
+        // Encode current nickname.
+        if nickName.text != "" {
+            coder.encode(nickName.text, forKey: "nickNameText")
+        }
+        
+        // Encode current user.
+        user?.encodeUser(coder: coder)
+        
+        // Encode user firebase reference.
+        coder.encode(userRef!.url, forKey: "userRef")
+        
+        super.encodeRestorableState(with: coder)
+    }
+    
+    override func decodeRestorableState(with coder: NSCoder) {
+        
+        // Restore nickname.
+        if let saveNickNameText = coder.decodeObject(forKey: "nickNameText") as? String {
+        
+            nickName.text = saveNickNameText
+            nickName.becomeFirstResponder()
+        }
+        
+        // Restore user.
+        user = User.init(coder: coder)
+        
+        // Decode user firebase reference.
+        let saveUserRefURL = coder.decodeObject(forKey: "userRef") as? String
+        
+        // Restore user reference.
+        userRef = FIRDatabase.database().reference(fromURL: saveUserRefURL!)
+        
+        // Get current user information.
+        userRef?.observeSingleEvent(of: .value, with: { (snapshot) in
+            // Get user value
+            let value = snapshot.value as? NSDictionary
+            self.nicknameText = value?["Nickname"] as? String ?? ""
+        })
     }
     
 }
