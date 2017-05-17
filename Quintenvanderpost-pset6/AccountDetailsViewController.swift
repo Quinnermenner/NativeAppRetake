@@ -323,7 +323,12 @@ class AccountDetailsViewController: UIViewController, UITextFieldDelegate {
         // Restore user reference.
         userRef = FIRDatabase.database().reference(fromURL: saveUserRefURL!)
         
-        // Get current user information.
+        super.decodeRestorableState(with: coder)
+    }
+    
+    override func applicationFinishedRestoringState() {
+        
+        // Restore vital elements for View.
         userRef?.observeSingleEvent(of: .value, with: { (snapshot) in
             // Get user value
             let value = snapshot.value as? NSDictionary

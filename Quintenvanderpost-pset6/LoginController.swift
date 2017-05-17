@@ -151,4 +151,25 @@ class LoginController: UIViewController, UITextFieldDelegate  {
         
         present(alert, animated: true, completion: nil)
     }
+    
+    override func encodeRestorableState(with coder: NSCoder) {
+        
+        // Encode current user.
+        if user != nil {
+            user?.encodeUser(coder: coder)
+        }
+        
+        
+        super.encodeRestorableState(with: coder)
+    }
+    
+    override func decodeRestorableState(with coder: NSCoder) {
+        
+        // Restore user.
+        if let _ = coder.decodeObject(forKey: "userEmail") {
+            user = User.init(coder: coder)
+        }
+        
+        super.decodeRestorableState(with: coder)
+    }
 }

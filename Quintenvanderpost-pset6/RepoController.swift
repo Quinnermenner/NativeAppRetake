@@ -269,6 +269,7 @@ class RepoController: UITableViewController, DZNEmptyDataSetSource, DZNEmptyData
         // Restore user reference.
         userRef = FIRDatabase.database().reference(fromURL: saveUserRefURL!)
         
+        super.decodeRestorableState(with: coder)
     }
 
     // MARK: - Table view data source
