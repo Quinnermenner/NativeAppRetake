@@ -15,6 +15,9 @@ class LoginController: UIViewController, UITextFieldDelegate  {
     // MARK: Outlets
     @IBOutlet weak var loginEmail: UITextField!
     @IBOutlet weak var loginPass: UITextField!
+    
+    // MARK: Properties
+    var user: User!
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -26,8 +29,8 @@ class LoginController: UIViewController, UITextFieldDelegate  {
         loginEmail.tag = 1
         
         // Listener that segues to repos when user is logged in.
-        FIRAuth.auth()!.addStateDidChangeListener() { auth, user in
-            if user != nil {
+        FIRAuth.auth()?.addStateDidChangeListener() { auth, user in
+            if user != nil && self.navigationController?.visibleViewController == self {
                 self.performSegue(withIdentifier: "segueLogin", sender: nil)
             }
         }
@@ -91,11 +94,13 @@ class LoginController: UIViewController, UITextFieldDelegate  {
         
         // Perform login to database and alert if anything goes wrong.
         FIRAuth.auth()!.signIn(withEmail: login, password: password) { (user, error) in
-            let alert = UIAlertController(title: "Oops!",
-                                          message: "This combination of login and password does not match any user in the database.",
-                                          preferredStyle: .alert)
-            alert.addAction(UIAlertAction(title: "Continue", style: .default))
-            self.present(alert,animated: true, completion: nil)
+            if error != nil {
+                let alert = UIAlertController(title: "Oops!",
+                                              message: "This combination of login and password does not match any user in the database.",
+                                              preferredStyle: .alert)
+                alert.addAction(UIAlertAction(title: "Continue", style: .default))
+                self.present(alert,animated: true, completion: nil)
+            }
         }
     }
     

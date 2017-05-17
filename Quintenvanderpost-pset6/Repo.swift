@@ -14,7 +14,7 @@ struct Repo {
     let key: String
     let name: String
     let owner: String
-    let ref: FIRDatabaseReference?
+    var ref: FIRDatabaseReference?
     let url: String
     let updateDate: String
     let description: String
@@ -41,6 +41,39 @@ struct Repo {
         description = snapshotValue["description"] as! String
         id = snapshotValue["id"] as! Int
         ref = snapshot.ref
+    }
+    
+    mutating func setRef(refURL: String) {
+        
+        self.ref = FIRDatabase.database().reference(fromURL: refURL)
+    }
+    
+    func encodeRepo(coder: NSCoder) {
+        
+        coder.encode(self.key, forKey:"repoKey")
+        coder.encode(self.name, forKey:"repoName")
+        coder.encode(self.owner, forKey:"repoOwner")
+        coder.encode(self.ref?.url, forKey: "repoRef")
+        coder.encode(self.url, forKey:"repoURL")
+        coder.encode(self.updateDate, forKey:"repoUpdateDate")
+        coder.encode(self.description, forKey: "repoDescription")
+        coder.encode(String(describing: self.id), forKey: "repoID")
+        
+    }
+    
+    init(coder: NSCoder) {
+        
+        key = coder.decodeObject(forKey: "repoKey") as! String
+        name = coder.decodeObject(forKey: "repoName") as! String
+        owner = coder.decodeObject(forKey: "repoOwner") as! String
+        if let saveRepoRefUrl = coder.decodeObject(forKey: "repoRef") as? String {
+            ref = FIRDatabase.database().reference(fromURL: saveRepoRefUrl)
+        }
+        url = coder.decodeObject(forKey: "repoURL") as! String
+        updateDate = coder.decodeObject(forKey: "repoUpdateDate") as! String
+        description = coder.decodeObject(forKey: "repoDescription") as! String
+        id = Int(coder.decodeObject(forKey: "repoID") as! String)!
+        
     }
     
     func toAnyObject() -> Any {

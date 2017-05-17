@@ -15,8 +15,8 @@ class AccountDetailsViewController: UIViewController, UITextFieldDelegate {
     let baseRef = FIRDatabase.database().reference()
     
     // MARK: Properties
-    var userRef: FIRDatabaseReference!
-    var user: User!
+    var userRef: FIRDatabaseReference?
+    var user: User?
     var nicknameText: String = ""
     var activeTextField = UITextField()
     
@@ -34,7 +34,7 @@ class AccountDetailsViewController: UIViewController, UITextFieldDelegate {
         self.navigationItem.backBarButtonItem?.title = "Repos"
         
         // Get current user information.
-        userRef.observeSingleEvent(of: .value, with: { (snapshot) in
+        userRef?.observeSingleEvent(of: .value, with: { (snapshot) in
             // Get user value
             let value = snapshot.value as? NSDictionary
             self.nicknameText = value?["Nickname"] as? String ?? ""
@@ -193,7 +193,7 @@ class AccountDetailsViewController: UIViewController, UITextFieldDelegate {
         let curUser = FIRAuth.auth()?.currentUser
         var credential: FIRAuthCredential
         
-        credential = FIREmailPasswordAuthProvider.credential(withEmail: user.email, password: curPassword)
+        credential = FIREmailPasswordAuthProvider.credential(withEmail: user!.email, password: curPassword)
         var success = false
         curUser?.reauthenticate(with: credential) { error in
             if let error = error {
@@ -210,9 +210,9 @@ class AccountDetailsViewController: UIViewController, UITextFieldDelegate {
         self.nicknameText = newNickname
         DispatchQueue.main.async {
             
-            self.userRef.child("Nickname").setValue(newNickname)
+            self.userRef?.child("Nickname").setValue(newNickname)
             
-            self.userRef.observeSingleEvent(of: .value, with: { (snapshot) in
+            self.userRef?.observeSingleEvent(of: .value, with: { (snapshot) in
                 
                 // Get user value
                 let value = snapshot.value as? NSDictionary

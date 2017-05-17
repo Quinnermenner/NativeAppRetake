@@ -13,7 +13,7 @@
         <!--Login Controller-->
         <scene sceneID="tne-QT-ifu">
             <objects>
-                <viewController id="BYZ-38-t0r" customClass="LoginController" customModule="Quintenvanderpost_pset6" customModuleProvider="target" sceneMemberID="viewController">
+                <viewController storyboardIdentifier="LoginController" useStoryboardIdentifierAsRestorationIdentifier="YES" id="BYZ-38-t0r" customClass="LoginController" customModule="Quintenvanderpost_pset6" customModuleProvider="target" sceneMemberID="viewController">
                     <layoutGuides>
                         <viewControllerLayoutGuide type="top" id="y3c-jy-aDJ"/>
                         <viewControllerLayoutGuide type="bottom" id="wfy-db-euE"/>
@@ -112,7 +112,7 @@
         <!--Account Details View Controller-->
         <scene sceneID="UVU-rY-2UT">
             <objects>
-                <viewController id="0cr-R7-B7g" customClass="AccountDetailsViewController" customModule="Quintenvanderpost_pset6" customModuleProvider="target" sceneMemberID="viewController">
+                <viewController storyboardIdentifier="AccountController" useStoryboardIdentifierAsRestorationIdentifier="YES" id="0cr-R7-B7g" customClass="AccountDetailsViewController" customModule="Quintenvanderpost_pset6" customModuleProvider="target" sceneMemberID="viewController">
                     <layoutGuides>
                         <viewControllerLayoutGuide type="top" id="LjH-39-DD1"/>
                         <viewControllerLayoutGuide type="bottom" id="98E-LW-uwW"/>
@@ -291,7 +291,7 @@
         <!--Repo Controller-->
         <scene sceneID="X4D-ZA-8zM">
             <objects>
-                <tableViewController id="6SW-LR-el7" customClass="RepoController" customModule="Quintenvanderpost_pset6" customModuleProvider="target" sceneMemberID="viewController">
+                <tableViewController storyboardIdentifier="RepoController" useStoryboardIdentifierAsRestorationIdentifier="YES" id="6SW-LR-el7" customClass="RepoController" customModule="Quintenvanderpost_pset6" customModuleProvider="target" sceneMemberID="viewController">
                     <tableView key="view" clipsSubviews="YES" contentMode="scaleToFill" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" separatorStyle="default" rowHeight="44" sectionHeaderHeight="28" sectionFooterHeight="28" id="3Br-Wn-ued">
                         <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
@@ -403,7 +403,7 @@
         <!--View Controller-->
         <scene sceneID="AtH-RW-dbU">
             <objects>
-                <viewController automaticallyAdjustsScrollViewInsets="NO" id="x4M-gS-Dbd" customClass="MCViewController" customModule="Quintenvanderpost_pset6" customModuleProvider="target" sceneMemberID="viewController">
+                <viewController storyboardIdentifier="CommitController" automaticallyAdjustsScrollViewInsets="NO" useStoryboardIdentifierAsRestorationIdentifier="YES" id="x4M-gS-Dbd" customClass="MCViewController" customModule="Quintenvanderpost_pset6" customModuleProvider="target" sceneMemberID="viewController">
                     <layoutGuides>
                         <viewControllerLayoutGuide type="top" id="7KX-Mw-nf7"/>
                         <viewControllerLayoutGuide type="bottom" id="tY9-K8-pZQ"/>
@@ -665,7 +665,7 @@
         <!--Navigation Controller-->
         <scene sceneID="avz-tt-eio">
             <objects>
-                <navigationController automaticallyAdjustsScrollViewInsets="NO" id="fys-PK-UNo" sceneMemberID="viewController">
+                <navigationController storyboardIdentifier="NavigationController" automaticallyAdjustsScrollViewInsets="NO" useStoryboardIdentifierAsRestorationIdentifier="YES" id="fys-PK-UNo" sceneMemberID="viewController">
                     <toolbarItems/>
                     <navigationBar key="navigationBar" contentMode="scaleToFill" id="TLP-Ki-k75">
                         <rect key="frame" x="0.0" y="0.0" width="375" height="44"/>

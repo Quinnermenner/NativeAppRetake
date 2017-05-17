@@ -24,4 +24,16 @@ struct User {
         self.email = email
     }
     
+    init(coder: NSCoder) {
+        
+        email = coder.decodeObject(forKey: "userEmail") as! String
+        uid = coder.decodeObject(forKey: "userUID") as! String
+    }
+    
+    func encodeUser(coder: NSCoder) {
+        
+        coder.encode(uid, forKey: "userUID")
+        coder.encode(email, forKey: "userEmail")
+    }
+    
 }
