@@ -10,8 +10,12 @@ import UIKit
 import Firebase
 import SwiftyJSON
 import SafariServices
+import DZNEmptyDataSet
 
-class MCViewController: UIViewController, UITextFieldDelegate {
+class MCViewController: UIViewController, UITextFieldDelegate, DZNEmptyDataSetSource, DZNEmptyDataSetDelegate {
+    
+    // Mark: Constants
+    let network = reachabilityTest.sharedInstance
     
     // MARK: Initializers
     var repo: Repo?
@@ -22,6 +26,7 @@ class MCViewController: UIViewController, UITextFieldDelegate {
     var commits = [Commit]()
     var messages = [Message]()
     var tableCellList = [MessageCommitProtocol]()
+    var searchingCommit = true
    
     
     // MARK: Outlets
@@ -35,12 +40,17 @@ class MCViewController: UIViewController, UITextFieldDelegate {
         // Set delegates
         tableView.dataSource = self
         tableView.delegate = self
+        tableView.emptyDataSetSource = self
+        tableView.emptyDataSetDelegate = self
         messageTextField.delegate = self
+        tableView.tableFooterView = UIView(frame: CGRect.zero)
         
         
         self.title = repo?.name
+        DispatchQueue.main.async {
+            self.prepareTableView()
+        }
         
-        prepareTableView()
         
         // Tapgesture to dismiss keyboard when table is tapped.
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(MCViewController.hideKeyboard))
@@ -70,16 +80,17 @@ class MCViewController: UIViewController, UITextFieldDelegate {
     func gitCommit(owner: String?, repoName: String?) -> JSON {
         
         // Gets a list of commits from github for specified repo. Returns commits in json format.
-        if let owner = owner, let repoName = repoName {
-            let url = URL(string: "https://api.github.com/repos/\(owner)/\(repoName)/commits")!
-            let data = try? Data(contentsOf: url)
-            let json = JSON(data: data!)
+        do {
+            let url = URL(string: "https://api.github.com/repos/\(owner!)/\(repoName!)/commits")
+            let data = try Data(contentsOf: url!)
+            let json = JSON(data: data)
             return json
-        } else {
-            let json = [:] as JSON
-            return json
+        } catch {
+            return [:] as JSON
         }
+
     }
+    
     
     func prepareTableView() {
         
@@ -124,6 +135,8 @@ class MCViewController: UIViewController, UITextFieldDelegate {
         self.tableCellList = tableCellList.sorted(by: {$0.date < $1.date})
         
         DispatchQueue.main.async {
+            // Done searching and updateing commits and messages.
+            self.searchingCommit = false
             self.tableView.reloadData()
             self.scrollToLastRow()
         }
@@ -149,20 +162,22 @@ class MCViewController: UIViewController, UITextFieldDelegate {
     // Gets the commits and updates the database with new commits.
     func updateCommits() {
         
-        let commitJsons = gitCommit(owner: repo?.owner, repoName: repo?.name)
-        for (_, subJson):(String, JSON) in commitJsons {
-            let author = subJson["commit"]["committer"]["name"].stringValue
-            let date = subJson["commit"]["committer"]["date"].stringValue
-            let message = subJson["commit"]["message"].stringValue
-            let sha = subJson["sha"].stringValue
-            
-            let commit = Commit(author: author, message: message, sha: sha, date: date)
-            self.commitRef?.child(sha).observeSingleEvent(of: .value, with: { (snapshot) in
-                if snapshot.exists() == false {
-                    self.commitRef?.updateChildValues([sha : commit.toAnyObject()])
-                }
-            })
-        }
+        if network.test() {
+            let commitJsons = gitCommit(owner: repo?.owner, repoName: repo?.name)
+            for (_, subJson):(String, JSON) in commitJsons {
+                let author = subJson["commit"]["committer"]["name"].stringValue
+                let date = subJson["commit"]["committer"]["date"].stringValue
+                let message = subJson["commit"]["message"].stringValue
+                let sha = subJson["sha"].stringValue
+                
+                let commit = Commit(author: author, message: message, sha: sha, date: date)
+                self.commitRef?.child(sha).observeSingleEvent(of: .value, with: { (snapshot) in
+                    if snapshot.exists() == false {
+                        self.commitRef?.updateChildValues([sha : commit.toAnyObject()])
+                    }
+                })
+            }
+        } else { network.alert(viewController: self) }
     }
     
     // Saves a message to the database to present in everyones tableViews.
@@ -231,14 +246,16 @@ class MCViewController: UIViewController, UITextFieldDelegate {
     // Shows the commit details in a safari inapp browser view.
     func showCommit(_ index: Int) {
         
-        let commit = self.tableCellList[index] as! Commit
-        let sha = commit.sha
-        let owner = repo!.owner
-        let name = repo!.name
-        if let url = URL(string: "https://github.com/\(owner)/\(name)/commit/\(sha)") {
-            let vc = SFSafariViewController(url: url, entersReaderIfAvailable: true)
-            present(vc, animated: true)
-        }
+        if network.test() {
+            let commit = self.tableCellList[index] as! Commit
+            let sha = commit.sha
+            let owner = repo!.owner
+            let name = repo!.name
+            if let url = URL(string: "https://github.com/\(owner)/\(name)/commit/\(sha)") {
+                let vc = SFSafariViewController(url: url, entersReaderIfAvailable: true)
+                present(vc, animated: true)
+            }
+        } else { network.alert(viewController: self) }
     }
     
     override func didReceiveMemoryWarning() {
@@ -290,6 +307,21 @@ class MCViewController: UIViewController, UITextFieldDelegate {
         // Restore vital elements for View.
         self.title = repo?.name
         prepareTableView()
+    }
+    
+    // Shows a nice text for empty tableViews.
+    func title(forEmptyDataSet scrollView: UIScrollView!) -> NSAttributedString! {
+        var text: String = ""
+        if self.searchingCommit {
+            text = "Searching for commits.."
+        } else {
+            text = "This repository has no commits!"
+        }
+        let emptyText = NSMutableAttributedString(
+            string: text,
+            attributes: [NSFontAttributeName: UIFont(name: "Georgia", size: 18.0)!,
+            NSForegroundColorAttributeName: UIColor.darkGray])
+        return emptyText
     }
 
 }

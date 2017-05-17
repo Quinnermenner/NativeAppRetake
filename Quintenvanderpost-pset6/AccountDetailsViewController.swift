@@ -13,6 +13,7 @@ class AccountDetailsViewController: UIViewController, UITextFieldDelegate {
     
     // MARK: Constants
     let baseRef = FIRDatabase.database().reference()
+    let network = reachabilityTest.sharedInstance
     
     // MARK: Properties
     var userRef: FIRDatabaseReference?
@@ -149,42 +150,43 @@ class AccountDetailsViewController: UIViewController, UITextFieldDelegate {
     
     func updatePassword(newPassword: String) {
         
-        let curPassword = self.currentPassword.text!
-        if newPassword != "" {
-            if reauthUser(curPassword: curPassword) {
-                
-                FIRAuth.auth()?.currentUser?.updatePassword(newPassword) { (error) in
-                    print("Could not update password")
+        if network.test() {
+            let curPassword = self.currentPassword.text!
+            if newPassword != "" {
+                if reauthUser(curPassword: curPassword) {
+                    
+                    FIRAuth.auth()?.currentUser?.updatePassword(newPassword) { (error) in
+                        print("Could not update password")
+                    }
+                    self.newPassword.text = ""
+                    self.currentPassword.text = ""
+                    self.activeTextField.resignFirstResponder()
+                } else {
+                    
+                    // Alert when reauthentication fails.
+                    let alert = UIAlertController(title: "Oops!",
+                                                  message: "Incorrect password.",
+                                                  preferredStyle: .alert)
+                    alert.addAction(UIAlertAction(title: "Continue", style: .default) {_ in
+                        
+                        self.currentPassword.becomeFirstResponder()
+                        self.newPassword.text = newPassword
+                    })
+                    
+                    self.present(alert,animated: true, completion: nil)
                 }
-                self.newPassword.text = ""
-                self.currentPassword.text = ""
-                self.activeTextField.resignFirstResponder()
             } else {
-                
-                // Alert when reauthentication fails.
+                // Alert when new password cannot be set.
                 let alert = UIAlertController(title: "Oops!",
-                                              message: "Incorrect password.",
+                                              message: "That password is not allowed.",
                                               preferredStyle: .alert)
                 alert.addAction(UIAlertAction(title: "Continue", style: .default) {_ in
-                    
-                    self.currentPassword.becomeFirstResponder()
-                    self.newPassword.text = newPassword
+                    self.newPassword.becomeFirstResponder()
+                    self.currentPassword.text = curPassword
                 })
-                
                 self.present(alert,animated: true, completion: nil)
             }
-        } else {
-            // Alert when new password cannot be set.
-            let alert = UIAlertController(title: "Oops!",
-                                          message: "That password is not allowed.",
-                                          preferredStyle: .alert)
-            alert.addAction(UIAlertAction(title: "Continue", style: .default) {_ in
-                self.newPassword.becomeFirstResponder()
-                self.currentPassword.text = curPassword
-            })
-            self.present(alert,animated: true, completion: nil)
-        }
-        
+        } else { network.alert(viewController: self) }
     }
     
     func reauthUser(curPassword: String) -> Bool {

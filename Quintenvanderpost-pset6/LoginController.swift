@@ -9,6 +9,9 @@
 import UIKit
 import Firebase
 import SwiftyJSON
+import SystemConfiguration
+import ReachabilitySwift
+
 
 class LoginController: UIViewController, UITextFieldDelegate  {
     
@@ -17,6 +20,7 @@ class LoginController: UIViewController, UITextFieldDelegate  {
     @IBOutlet weak var loginPass: UITextField!
     
     // MARK: Properties
+    let network = reachabilityTest.sharedInstance
     var user: User!
 
     override func viewDidLoad() {
@@ -31,6 +35,7 @@ class LoginController: UIViewController, UITextFieldDelegate  {
         // Listener that segues to repos if user is already logged in.
         FIRAuth.auth()?.addStateDidChangeListener() { auth, user in
             if user != nil && self.navigationController?.visibleViewController == self {
+                print("Found a login!")
                 self.performSegue(withIdentifier: "segueLogin", sender: nil)
             }
         }
@@ -93,19 +98,21 @@ class LoginController: UIViewController, UITextFieldDelegate  {
     func loginUser(login: String, password: String) {
         
         // Perform login to database and alert if anything goes wrong.
-        FIRAuth.auth()!.signIn(withEmail: login, password: password) { (user, error) in
-            if error != nil {
-                let alert = UIAlertController(title: "Oops!",
-                                              message: "This combination of login and password does not match any user in the database.",
-                                              preferredStyle: .alert)
-                alert.addAction(UIAlertAction(title: "Continue", style: .default))
-                self.present(alert,animated: true, completion: nil)
-            } else {
-                
-                // Perform segue on successful login.
-                self.performSegue(withIdentifier: "segueLogin", sender: self)
+        if network.test() {
+            FIRAuth.auth()!.signIn(withEmail: login, password: password) { (user, error) in
+                if error != nil {
+                    let alert = UIAlertController(title: "Oops!",
+                                                  message: "This combination of login and password does not match any user in the database.",
+                                                  preferredStyle: .alert)
+                    alert.addAction(UIAlertAction(title: "Continue", style: .default))
+                    self.present(alert,animated: true, completion: nil)
+                } else {
+                    
+                    // Perform segue on successful login.
+                    self.performSegue(withIdentifier: "segueLogin", sender: self)
+                }
             }
-        }
+        } else { network.alert(viewController: self) }
     }
     
     @IBAction func loginDidTouch(_ sender: AnyObject) {

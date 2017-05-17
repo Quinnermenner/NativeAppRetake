@@ -10,8 +10,9 @@ import UIKit
 import Firebase
 import SwiftyJSON
 import AZDropdownMenu
+import DZNEmptyDataSet
 
-class RepoController: UITableViewController {
+class RepoController: UITableViewController, DZNEmptyDataSetSource, DZNEmptyDataSetDelegate {
     
     // MARK Outlets:
     @IBOutlet var repoTable: UITableView!
@@ -24,6 +25,7 @@ class RepoController: UITableViewController {
     let baseRef = FIRDatabase.database().reference()
     let ref = FIRDatabase.database().reference(withPath: "repo-list")
     let usersRef = FIRDatabase.database().reference(withPath: "online")
+    let network = reachabilityTest.sharedInstance
     
     // MARK: Properties
     var repos: [Repo] = []
@@ -35,6 +37,11 @@ class RepoController: UITableViewController {
         super.viewDidLoad()
         
         self.title = "Your Repositories"
+        
+        // Set delegates
+        repoTable.emptyDataSetSource = self
+        repoTable.emptyDataSetDelegate = self
+        repoTable.tableFooterView = UIView(frame: CGRect.zero)
         
         // Construct dropdown menu and button
         self.constructMenu()
@@ -84,11 +91,50 @@ class RepoController: UITableViewController {
     func gitRepoSearch(owner: String, name: String) -> JSON {
         
         // Search git for specified repository and return data as json.
-        let url = URL(string: "https://api.github.com/search/repositories?q=\(owner)/\(name)")!
-        let data = try? Data(contentsOf: url)
-        let json = JSON(data: data!)
-
-        return json
+        do {
+            let url = URL(string: "https://api.github.com/search/repositories?q=\(owner)/\(name)")!
+            let data = try Data(contentsOf: url)
+            let json = JSON(data: data)
+            return json
+        } catch {
+            return [:] as JSON
+        }
+    }
+    
+    func saveRepo(owner: String, repository: String) -> Bool {
+        
+        if network.test() {
+            let repoJson = self.gitRepoSearch(owner: owner, name: repository)
+            
+            // If json is empty no repo was found.
+            guard repoJson["total_count"] != 0 else {
+                
+                return false
+            }
+            
+            let name = repoJson["items"][0]["name"].stringValue
+            let description = repoJson["items"][0]["description"].stringValue
+            let owner = repoJson["items"][0]["owner"]["login"].stringValue
+            let url = repoJson["items"][0]["owner"]["html_url"].stringValue
+            let updateDate = repoJson["items"][0]["updated_at"].stringValue
+            let id = repoJson["items"][0]["id"].intValue
+            let stringID = String(id)
+            
+            let repo = Repo(name: name, description: description, owner: owner, url: url, updateDate: updateDate, id: id)
+            
+            // If repo was already in database, no database adding is required.
+            self.ref.child(stringID).observeSingleEvent(of: .value, with: { (snapshot) in
+                if snapshot.exists() == false {
+                    
+                    self.ref.updateChildValues([stringID : (repo.toAnyObject())])
+                }
+                
+                // Update users saved repos.
+                self.userRef.child("savedRepos/\(stringID)").setValue(true)
+            })
+        } else { network.alert(viewController: self) }
+        
+        return true
     }
     
     // Adds a github repository or alerts if no matching/alike repository is found.
@@ -115,34 +161,9 @@ class RepoController: UITableViewController {
         let saveAction = UIAlertAction(title: "Add", style: .default) { _ in
             guard gitOwner.text != nil, gitRepo.text != nil else { return }
 
-            let repoJson = self.gitRepoSearch(owner: gitOwner.text!, name: gitRepo.text!)
-            // If json is empty no repo was found.
-            guard repoJson["total_count"] != 0 else {
-                
+            if self.saveRepo(owner: gitOwner.text!, repository: gitRepo.text!) == false {
                 self.present(notFoundAlert, animated: true, completion: nil)
-                return
             }
-            
-            let name = repoJson["items"][0]["name"].stringValue
-            let description = repoJson["items"][0]["description"].stringValue
-            let owner = repoJson["items"][0]["owner"]["login"].stringValue
-            let url = repoJson["items"][0]["owner"]["html_url"].stringValue
-            let updateDate = repoJson["items"][0]["updated_at"].stringValue
-            let id = repoJson["items"][0]["id"].intValue
-            let stringID = String(id)
-                                        
-            let repo = Repo(name: name, description: description, owner: owner, url: url, updateDate: updateDate, id: id)
-
-            // If repo was already in database, no database adding is required.
-            self.ref.child(stringID).observeSingleEvent(of: .value, with: { (snapshot) in
-                if snapshot.exists() == false {
-                    
-                    self.ref.updateChildValues([stringID : (repo.toAnyObject())])
-                }
-                
-                // Update users saved repos.
-                self.userRef.child("savedRepos/\(stringID)").setValue(true)
-            })
             
         }
         
@@ -168,8 +189,19 @@ class RepoController: UITableViewController {
     }
 
     @IBAction func logoutDidTouch(_ sender: AnyObject) {
-        try! FIRAuth.auth()!.signOut()
-        performSegue(withIdentifier: "segueToLoginController", sender: nil)
+        
+        do {
+            try FIRAuth.auth()!.signOut()
+            performSegue(withIdentifier: "segueToLoginController", sender: nil)
+        } catch {
+            if network.test() {
+                let alert = UIAlertController(title: "Oops!",
+                                              message: "Could not log out of database.",
+                                              preferredStyle: .alert)
+                alert.addAction(UIAlertAction(title: "Continue", style: .default))
+                self.present(alert,animated: true, completion: nil)
+            } else { performSegue(withIdentifier: "segueToLoginController", sender: nil) }
+        }
     }
     
     func logoutUser() {
@@ -205,17 +237,47 @@ class RepoController: UITableViewController {
         }
     }
     
+    // Shows a nice text for empty tableViews.
+    func title(forEmptyDataSet scrollView: UIScrollView!) -> NSAttributedString! {
+        
+        let text = NSMutableAttributedString(
+            string: "Add some repositories to track!",
+            attributes: [NSFontAttributeName: UIFont(name: "Georgia", size: 18.0)!,
+                         NSForegroundColorAttributeName: UIColor.darkGray])
+        return text
+    }
     
+    override func encodeRestorableState(with coder: NSCoder) {
+        
+        // Encode current user.
+        user?.encodeUser(coder: coder)
+        
+        // Encode user firebase reference.
+        coder.encode(userRef!.url, forKey: "userRef")
+        
+        super.encodeRestorableState(with: coder)
+    }
+    
+    override func decodeRestorableState(with coder: NSCoder) {
+        
+        // Restore user.
+        user = User.init(coder: coder)
+        
+        // Decode user firebase reference.
+        let saveUserRefURL = coder.decodeObject(forKey: "userRef") as? String
+        
+        // Restore user reference.
+        userRef = FIRDatabase.database().reference(fromURL: saveUserRefURL!)
+        
+    }
 
     // MARK: - Table view data source
 
     override func numberOfSections(in tableView: UITableView) -> Int {
-        // #warning Incomplete implementation, return the number of sections
         return 1
     }
 
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        // #warning Incomplete implementation, return the number of rows
         return repos.count
     }
     
@@ -243,7 +305,6 @@ class RepoController: UITableViewController {
     
     // Override to support conditional editing of the table view.
     override func tableView(_ tableView: UITableView, canEditRowAt indexPath: IndexPath) -> Bool {
-        // Return false if you do not want the specified item to be editable.
         return true
     }
     
@@ -253,7 +314,13 @@ class RepoController: UITableViewController {
         if editingStyle == .delete {
             let repo = repos[indexPath.row]
             let repoID = repo.id
-            userRef.child("savedRepos/\(repoID)").setValue(false)
+            DispatchQueue.main.async {
+                self.repos.remove(at: indexPath.row)
+                self.repoTable.reloadData()
+                self.userRef.child("savedRepos/\(repoID)").setValue(false)
+            }
+            
+            
         }
     }
     

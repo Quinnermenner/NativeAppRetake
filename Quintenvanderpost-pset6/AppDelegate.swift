@@ -17,16 +17,12 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     override init() {
         super.init()
         FIRApp.configure()
-//         not really needed unless you really need it
         FIRDatabase.database().persistenceEnabled = true
     }
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey: Any]?) -> Bool {
         // Override point for customization after application launch.
-//        if FIRDatabase.database().reference() == nil{
-//            FIRApp.configure()
-//        }
-//        FIRDatabase.database().persistenceEnabled = true
+
         return true
     }
 
@@ -57,7 +53,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     }
     
     func application(_ application: UIApplication, shouldRestoreApplicationState coder: NSCoder) -> Bool {
-//        FIRApp.configure()
         return true
     }
 

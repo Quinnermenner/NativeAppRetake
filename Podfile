@@ -11,6 +11,8 @@ target 'Quintenvanderpost-pset6' do
   pod 'Firebase/Auth'
   pod 'SwiftyJSON'
   pod 'AZDropdownMenu'
+  pod 'ReachabilitySwift', '~> 3'
+  pod 'DZNEmptyDataSet'
 
   # Pods for Quintenvanderpost-pset6
 
