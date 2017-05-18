@@ -9,6 +9,11 @@
 			<key>isShown</key>
 			<false/>
 		</dict>
+		<key>DZNEmptyDataSet.xcscheme</key>
+		<dict>
+			<key>isShown</key>
+			<false/>
+		</dict>
 		<key>GTMSessionFetcher.xcscheme</key>
 		<dict>
 			<key>isShown</key>
@@ -24,6 +29,11 @@
 			<key>isShown</key>
 			<false/>
 		</dict>
+		<key>ReachabilitySwift.xcscheme</key>
+		<dict>
+			<key>isShown</key>
+			<false/>
+		</dict>
 		<key>SwiftyJSON.xcscheme</key>
 		<dict>
 			<key>isShown</key>
@@ -32,11 +42,6 @@
 	</dict>
 	<key>SuppressBuildableAutocreation</key>
 	<dict>
-		<key>0314F4948AF35DEE32E6BD6D64FDDFD5</key>
-		<dict>
-			<key>primary</key>
-			<true/>
-		</dict>
 		<key>0BA6525597C1B817693051CCA494E16A</key>
 		<dict>
 			<key>primary</key>
@@ -47,12 +52,27 @@
 			<key>primary</key>
 			<true/>
 		</dict>
-		<key>8C1E6782903142FF4C52A34D3972B1D1</key>
+		<key>311255EA9F08C9DF5CA692FB29292618</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>7C26A41B69D13219F64B19F9A228E291</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>C0419C59A8EEC58937564DA986F5F67E</key>
 		<dict>
 			<key>primary</key>
 			<true/>
 		</dict>
 		<key>C052BEBFBD0AB5218CC64BA3450F6547</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>D386C75EFD4F03725E4EFB866B600B9A</key>
 		<dict>
 			<key>primary</key>
 			<true/>

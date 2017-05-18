@@ -105,13 +105,13 @@ class MCViewController: UIViewController, UITextFieldDelegate, DZNEmptyDataSetSo
     // Sets up the tableView and it's listeners.
     func prepareTableView() {
         
-        updateCommits()
+        self.updateCommits()
         
-        commitRef = repo?.ref?.child("commits")
-        messageRef = repo?.ref?.child("messages")
+        self.commitRef = self.repo?.ref?.child("commits")
+        self.messageRef = self.repo?.ref?.child("messages")
         
         // Listen for new commits and update tableView when necessary.
-        commitRef?.observe(.value, with: { snapshot in
+        self.commitRef?.observe(.value, with: { snapshot in
             var commitList: [Commit] = []
             for item in snapshot.children {
                 let commit = Commit(snapshot: item as! FIRDataSnapshot)
@@ -126,10 +126,11 @@ class MCViewController: UIViewController, UITextFieldDelegate, DZNEmptyDataSetSo
             else {
                 self.updateTableViewCells(commitList: self.commits, messageList: self.messages)
             }
+            
         })
         
         // Listen for new messages and update tableView whe nnecessary.
-        messageRef?.observe(.value, with: { (snapshot) in
+        self.messageRef?.observe(.value, with: { (snapshot) in
             var messageList : [Message] = []
             for item in snapshot.children {
                 let message = Message.init(snapshot: item as! FIRDataSnapshot)
@@ -145,73 +146,69 @@ class MCViewController: UIViewController, UITextFieldDelegate, DZNEmptyDataSetSo
                 self.updateTableViewCells(commitList: self.commits, messageList: self.messages)
             }
         })
+        
     }
     
     func constructTableViewCells(commitList: [Commit], messageList: [Message]) {
         
-        tableCellList = [MessageCommitProtocol]()
-        for commit in commitList {
-            tableCellList.append(commit)
-        }
-        for message in messageList {
-            tableCellList.append(message)
-        }
-        // Sort cells by creation date.
-        self.tableCellList = tableCellList.sorted(by: {$0.date < $1.date})
-        
         DispatchQueue.main.async {
+        
+            self.tableCellList = [MessageCommitProtocol]()
+            for commit in commitList {
+                self.tableCellList.append(commit)
+            }
+            for message in messageList {
+                self.tableCellList.append(message)
+            }
+            // Sort cells by creation date.
+            self.tableCellList = self.tableCellList.sorted(by: {$0.date < $1.date})
+        
+       
             // Done searching and updateing commits and messages.
             self.tableView.reloadData()
             self.scrollToLastRow()
             self.searchingCommit = false
         }
-        
-        
     }
     
     func updateTableViewCells(commitList: [Commit], messageList: [Message]) {
         
-        var tempCellList = [MessageCommitProtocol]()
-        var deltaCellList = [MessageCommitProtocol]()
-        
-        // Fill the latest CellList
-        for commit in commitList {
-            tempCellList.append(commit)
-        }
-        for message in messageList {
-            tempCellList.append(message)
-        }
-
-        // Check for differnces with current CellList
-        for element in tempCellList {
-            if self.tableCellList.contains(where: { $0.key == element.key }) {
-                
-                continue
-            } else {
-                deltaCellList.append(element)
-            }
-        }
-
-        // If differences were found; update tableView and relevant data.
-        if deltaCellList.isEmpty == false {
-            deltaCellList = deltaCellList.sorted(by: {$0.date < $1.date})
-            self.tableCellList.append(contentsOf: deltaCellList)
-
-            tableView.beginUpdates()
-            tableView.insertRows(at: [IndexPath(row: deltaCellList.count - 1, section: 0)], with: .automatic)
-            tableView.endUpdates()
-            scrollToLastRow()
+        DispatchQueue.main.async {
+            var tempCellList = [MessageCommitProtocol]()
+            var deltaCellList = [MessageCommitProtocol]()
             
-            for element in deltaCellList {
+            // Fill the latest CellList
+            for commit in commitList {
+                tempCellList.append(commit)
+            }
+            for message in messageList {
+                tempCellList.append(message)
+            }
+            
+            // Check for differnces with current CellList
+            for element in tempCellList {
+                if self.tableCellList.contains(where: { $0.key == element.key }) {
+                    
+                    continue
+                } else {
+                    deltaCellList.append(element)
+                }
+            }
+            
+            // If differences were found; update tableView and relevant data.
+            if deltaCellList.count == 1 {
+                self.tableCellList.append(contentsOf: deltaCellList)
                 
-                if let element = element as? Commit {
-                    
-                    self.commits.append(element)
-                }
-                else if let element = element as? Message {
-                    
-                    self.messages.append(element)
-                }
+                self.tableView.beginUpdates()
+                self.tableView.insertRows(at: [IndexPath(row: deltaCellList.count - 1, section: 0)], with: .automatic)
+                self.tableView.endUpdates()
+                self.scrollToLastRow()
+                
+            } else {
+                
+                self.tableCellList = tempCellList.sorted(by: {$0.date < $1.date})
+                self.tableView.reloadData()
+                self.scrollToLastRow()
             }
         }
     }
@@ -234,22 +231,25 @@ class MCViewController: UIViewController, UITextFieldDelegate, DZNEmptyDataSetSo
     // Gets the commits and updates the database with new commits.
     func updateCommits() {
         
-        if network.test() {
-            let commitJsons = gitCommit(owner: repo?.owner, repoName: repo?.name)
-            for (_, subJson):(String, JSON) in commitJsons {
-                let author = subJson["commit"]["committer"]["name"].stringValue
-                let date = subJson["commit"]["committer"]["date"].stringValue
-                let message = subJson["commit"]["message"].stringValue
-                let sha = subJson["sha"].stringValue
+        DispatchQueue.main.async {
+            if self.network.test() {
                 
-                let commit = Commit(author: author, message: message, sha: sha, date: date)
-                self.commitRef?.child(sha).observeSingleEvent(of: .value, with: { (snapshot) in
-                    if snapshot.exists() == false {
-                        self.commitRef?.updateChildValues([sha : commit.toAnyObject()])
-                    }
-                })
-            }
-        } else { network.alert(viewController: self) }
+                let commitJsons = self.gitCommit(owner: self.repo?.owner, repoName: self.repo?.name)
+                for (_, subJson):(String, JSON) in commitJsons {
+                    let author = subJson["commit"]["committer"]["name"].stringValue
+                    let date = subJson["commit"]["committer"]["date"].stringValue
+                    let message = subJson["commit"]["message"].stringValue
+                    let sha = subJson["sha"].stringValue
+                    
+                    let commit = Commit(author: author, message: message, sha: sha, date: date)
+                    self.commitRef?.child(sha).observeSingleEvent(of: .value, with: { (snapshot) in
+                        if snapshot.exists() == false {
+                            self.commitRef?.updateChildValues([sha : commit.toAnyObject()])
+                        }
+                    })
+                }
+            } else { self.network.alert(viewController: self) }
+        }
     }
     
     // Saves a message to the database to present in everyones tableViews.
