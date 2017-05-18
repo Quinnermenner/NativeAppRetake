@@ -11,4 +11,5 @@ import Foundation
 // Used to merge commit and object types into one array.
 protocol MessageCommitProtocol {
     var date: String { get }
+    var key: String { get }
 }

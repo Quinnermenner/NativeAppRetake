@@ -118,7 +118,14 @@ class MCViewController: UIViewController, UITextFieldDelegate, DZNEmptyDataSetSo
                 commitList.append(commit)
             }
             self.commits = commitList
-            self.constructTableViewCells(commitList: self.commits, messageList: self.messages)
+            
+            // Either construct the tableView or update it if it already exists.
+            if self.tableCellList.isEmpty {
+                self.constructTableViewCells(commitList: self.commits, messageList: self.messages)
+            }
+            else {
+                self.updateTableViewCells(commitList: self.commits, messageList: self.messages)
+            }
         })
         
         // Listen for new messages and update tableView whe nnecessary.
@@ -129,12 +136,17 @@ class MCViewController: UIViewController, UITextFieldDelegate, DZNEmptyDataSetSo
                 messageList.append(message)
             }
             self.messages = messageList
-            self.constructTableViewCells(commitList: self.commits, messageList: self.messages)
+
+            // Either construct the tableView or update it if it already exists.
+            if self.tableCellList.isEmpty {
+                self.constructTableViewCells(commitList: self.commits, messageList: self.messages)
+            }
+            else {
+                self.updateTableViewCells(commitList: self.commits, messageList: self.messages)
+            }
         })
     }
     
-    // If first time contstructing; scroll to last row.
-    var firstConstruction = true
     func constructTableViewCells(commitList: [Commit], messageList: [Message]) {
         
         tableCellList = [MessageCommitProtocol]()
@@ -150,14 +162,58 @@ class MCViewController: UIViewController, UITextFieldDelegate, DZNEmptyDataSetSo
         DispatchQueue.main.async {
             // Done searching and updateing commits and messages.
             self.tableView.reloadData()
-            if self.firstConstruction {
-                self.scrollToLastRow()
-                self.searchingCommit = false
-                self.firstConstruction = false
-            }
+            self.scrollToLastRow()
+            self.searchingCommit = false
         }
         
         
+    }
+    
+    func updateTableViewCells(commitList: [Commit], messageList: [Message]) {
+        
+        var tempCellList = [MessageCommitProtocol]()
+        var deltaCellList = [MessageCommitProtocol]()
+        
+        // Fill the latest CellList
+        for commit in commitList {
+            tempCellList.append(commit)
+        }
+        for message in messageList {
+            tempCellList.append(message)
+        }
+
+        // Check for differnces with current CellList
+        for element in tempCellList {
+            if self.tableCellList.contains(where: { $0.key == element.key }) {
+                
+                continue
+            } else {
+                deltaCellList.append(element)
+            }
+        }
+
+        // If differences were found; update tableView and relevant data.
+        if deltaCellList.isEmpty == false {
+            deltaCellList = deltaCellList.sorted(by: {$0.date < $1.date})
+            self.tableCellList.append(contentsOf: deltaCellList)
+
+            tableView.beginUpdates()
+            tableView.insertRows(at: [IndexPath(row: deltaCellList.count - 1, section: 0)], with: .automatic)
+            tableView.endUpdates()
+            scrollToLastRow()
+            
+            for element in deltaCellList {
+                
+                if let element = element as? Commit {
+                    
+                    self.commits.append(element)
+                }
+                else if let element = element as? Message {
+                    
+                    self.messages.append(element)
+                }
+            }
+        }
     }
     
     // Focus on bottom cell.
@@ -211,8 +267,6 @@ class MCViewController: UIViewController, UITextFieldDelegate, DZNEmptyDataSetSo
             self.userRef?.updateChildValues(["PostCount" : postCount + 1])
             self.userRef?.child("messages").child(messageUID).setValue(uniqueMessageRef?.url)
             self.messageTextField.text = ""
-            self.messageTextField.resignFirstResponder()
-            self.scrollToLastRow()
         })
     }
     

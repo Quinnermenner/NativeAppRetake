@@ -16,6 +16,9 @@ class Message: NSObject, MessageCommitProtocol, NSCoding {
     let author: String
     let key: String
     
+    override public var description: String {return self.text}
+
+    
     init(author: String, text: String, date: String, key: String = "") {
         self.author = author
         self.text = text
