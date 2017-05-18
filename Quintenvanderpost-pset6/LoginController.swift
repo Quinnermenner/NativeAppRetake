@@ -109,6 +109,7 @@ class LoginController: UIViewController, UITextFieldDelegate  {
                 } else {
                     
                     // Perform segue on successful login.
+                    self.user = User(authData: user!)
                     self.performSegue(withIdentifier: "segueLogin", sender: self)
                 }
             }
@@ -152,11 +153,21 @@ class LoginController: UIViewController, UITextFieldDelegate  {
         present(alert, animated: true, completion: nil)
     }
     
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        if segue.identifier == "segueLogin" {
+            if let navVC = segue.destination as? UINavigationController {
+                if let destination = navVC.topViewController as? RepoController {
+                    destination.user = user
+                }
+            }
+        }
+    }
+    
     override func encodeRestorableState(with coder: NSCoder) {
         
         // Encode current user.
         if user != nil {
-            user?.encodeUser(coder: coder)
+            user?.encode(with: coder)
         }
         
         

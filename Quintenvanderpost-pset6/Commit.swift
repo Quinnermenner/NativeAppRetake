@@ -64,6 +64,7 @@ class Commit: NSObject, MessageCommitProtocol, NSCoding {
         aCoder.encode(message, forKey: "message")
         aCoder.encode(sha, forKey: "sha")
         aCoder.encode(date, forKey: "date")
+        aCoder.encode(key, forKey: "key")
     }
     
 }

@@ -9,7 +9,7 @@
 import Foundation
 import Firebase
 
-struct Repo {
+class Repo: NSObject, NSCoding{
     
     let key: String
     let name: String
@@ -17,17 +17,17 @@ struct Repo {
     var ref: FIRDatabaseReference?
     let url: String
     let updateDate: String
-    let description: String
+    let repoDescription: String
     let id: Int
     
-    init(name: String, description: String, owner: String, url: String, updateDate: String, key: String = "", id: Int) {
+    init(name: String, repoDescription: String, owner: String, url: String, updateDate: String, key: String = "", id: Int) {
         self.name = name
         self.owner = owner
         self.url = url
         self.updateDate = updateDate
         self.ref = nil
         self.key = key
-        self.description = description
+        self.repoDescription = repoDescription
         self.id = id
     }
     
@@ -38,17 +38,17 @@ struct Repo {
         owner = snapshotValue["owner"] as! String
         updateDate = snapshotValue["updateDate"] as! String
         url = snapshotValue["url"] as! String
-        description = snapshotValue["description"] as! String
+        repoDescription = snapshotValue["description"] as! String
         id = snapshotValue["id"] as! Int
         ref = snapshot.ref
     }
     
-    mutating func setRef(refURL: String) {
+    func setRef(refURL: String) {
         
         self.ref = FIRDatabase.database().reference(fromURL: refURL)
     }
     
-    func encodeRepo(coder: NSCoder) {
+    func encode(with coder: NSCoder) {
         
         coder.encode(self.key, forKey:"repoKey")
         coder.encode(self.name, forKey:"repoName")
@@ -56,23 +56,26 @@ struct Repo {
         coder.encode(self.ref?.url, forKey: "repoRef")
         coder.encode(self.url, forKey:"repoURL")
         coder.encode(self.updateDate, forKey:"repoUpdateDate")
-        coder.encode(self.description, forKey: "repoDescription")
+        coder.encode(self.repoDescription, forKey: "repoDescription")
         coder.encode(String(describing: self.id), forKey: "repoID")
         
     }
     
-    init(coder: NSCoder) {
+    required convenience init?(coder: NSCoder) {
         
-        key = coder.decodeObject(forKey: "repoKey") as! String
-        name = coder.decodeObject(forKey: "repoName") as! String
-        owner = coder.decodeObject(forKey: "repoOwner") as! String
+        guard let key = coder.decodeObject(forKey: "repoKey") as? String,
+        let name = coder.decodeObject(forKey: "repoName") as? String,
+        let owner = coder.decodeObject(forKey: "repoOwner") as? String,
+        let url = coder.decodeObject(forKey: "repoURL") as? String,
+        let updateDate = coder.decodeObject(forKey: "repoUpdateDate") as? String,
+        let repoDescription = coder.decodeObject(forKey: "repoDescription") as? String,
+        let id = coder.decodeObject(forKey: "repoID") as? String
+            else { return nil }
+
+        self.init(name: name, repoDescription: repoDescription, owner: owner, url: url, updateDate: updateDate, key: key, id: Int(id)!)
         if let saveRepoRefUrl = coder.decodeObject(forKey: "repoRef") as? String {
-            ref = FIRDatabase.database().reference(fromURL: saveRepoRefUrl)
+            self.setRef(refURL: saveRepoRefUrl)
         }
-        url = coder.decodeObject(forKey: "repoURL") as! String
-        updateDate = coder.decodeObject(forKey: "repoUpdateDate") as! String
-        description = coder.decodeObject(forKey: "repoDescription") as! String
-        id = Int(coder.decodeObject(forKey: "repoID") as! String)!
         
     }
     
@@ -83,7 +86,7 @@ struct Repo {
             "owner" : owner,
             "url" : url,
             "updateDate" : updateDate,
-            "description" : description,
+            "description" : repoDescription,
             "id" : id
         ]
     }

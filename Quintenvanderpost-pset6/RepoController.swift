@@ -86,6 +86,18 @@ class RepoController: UITableViewController, DZNEmptyDataSetSource, DZNEmptyData
         tableView.estimatedRowHeight = 60
     }
     
+    override func viewWillAppear(_ animated: Bool) {
+        
+        let defaults = UserDefaults.standard
+        self.repos = loadReposFromDefaults(userDefault: defaults)
+    }
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        
+        let defaults = UserDefaults.standard
+        saveReposToDefaults(userDefault: defaults)
+    }
+    
     // Mark: Functions
     
     func gitRepoSearch(owner: String, name: String) -> JSON {
@@ -113,14 +125,14 @@ class RepoController: UITableViewController, DZNEmptyDataSetSource, DZNEmptyData
             }
             
             let name = repoJson["items"][0]["name"].stringValue
-            let description = repoJson["items"][0]["description"].stringValue
+            let repoDescription = repoJson["items"][0]["description"].stringValue
             let owner = repoJson["items"][0]["owner"]["login"].stringValue
             let url = repoJson["items"][0]["owner"]["html_url"].stringValue
             let updateDate = repoJson["items"][0]["updated_at"].stringValue
             let id = repoJson["items"][0]["id"].intValue
             let stringID = String(id)
             
-            let repo = Repo(name: name, description: description, owner: owner, url: url, updateDate: updateDate, id: id)
+            let repo = Repo(name: name, repoDescription: repoDescription, owner: owner, url: url, updateDate: updateDate, id: id)
             
             // If repo was already in database, no database adding is required.
             self.ref.child(stringID).observeSingleEvent(of: .value, with: { (snapshot) in
@@ -247,10 +259,12 @@ class RepoController: UITableViewController, DZNEmptyDataSetSource, DZNEmptyData
         return text
     }
     
+    // MARK: State restoration
+    
     override func encodeRestorableState(with coder: NSCoder) {
         
         // Encode current user.
-        user?.encodeUser(coder: coder)
+        user?.encode(with: coder)
         
         // Encode user firebase reference.
         coder.encode(userRef!.url, forKey: "userRef")
@@ -291,8 +305,8 @@ class RepoController: UITableViewController, DZNEmptyDataSetSource, DZNEmptyData
         cell.name.font = UIFont.boldSystemFont(ofSize: 16.0)
         
         // Add placeholder dashes for empty descriptions.
-        if repo.description != "" {
-            cell.repoDescription.text = repo.description
+        if repo.repoDescription != "" {
+            cell.repoDescription.text = repo.repoDescription
         } else {
             cell.repoDescription.text = "--------"
         }
@@ -300,6 +314,22 @@ class RepoController: UITableViewController, DZNEmptyDataSetSource, DZNEmptyData
         cell.updateDate.text = repo.owner
      
         return cell
+    }
+    
+    // MARK: Userdefaults
+    
+    func saveReposToDefaults(userDefault: UserDefaults) {
+        
+        guard self.repos.isEmpty == false else { return }
+        let repoData = NSKeyedArchiver.archivedData(withRootObject: self.repos)
+        userDefault.set(repoData, forKey: "repos/\(user.uid)")
+    }
+    
+    func loadReposFromDefaults(userDefault: UserDefaults) -> [Repo] {
+
+        guard let repoData = UserDefaults.standard.object(forKey: "repos/\(user.uid)") as? NSData else { return [] }
+        guard let repoArray = NSKeyedUnarchiver.unarchiveObject(with: repoData as Data) as? [Repo] else { return [] }
+        return repoArray
     }
     
 
@@ -329,6 +359,7 @@ class RepoController: UITableViewController, DZNEmptyDataSetSource, DZNEmptyData
         
         let selectedRow = repoTable.indexPathForSelectedRow
         performSegue(withIdentifier: "segueToMCController", sender: selectedRow)
+        tableView.deselectRow(at: indexPath, animated: true)
     }
     
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {

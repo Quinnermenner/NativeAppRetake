@@ -102,8 +102,8 @@ class MCViewController: UIViewController, UITextFieldDelegate, DZNEmptyDataSetSo
     }
     
     
+    // Sets up the tableView and it's listeners.
     func prepareTableView() {
-        
         
         updateCommits()
         
@@ -212,6 +212,7 @@ class MCViewController: UIViewController, UITextFieldDelegate, DZNEmptyDataSetSo
             self.userRef?.child("messages").child(messageUID).setValue(uniqueMessageRef?.url)
             self.messageTextField.text = ""
             self.messageTextField.resignFirstResponder()
+            self.scrollToLastRow()
         })
     }
     
@@ -233,7 +234,7 @@ class MCViewController: UIViewController, UITextFieldDelegate, DZNEmptyDataSetSo
         
         if messageText != "" {
             saveMessage(text: messageText, date: stringFromDate, uid: user!.uid)
-            self.scrollToLastRow()
+            
         }
     }
     
@@ -244,6 +245,7 @@ class MCViewController: UIViewController, UITextFieldDelegate, DZNEmptyDataSetSo
                 UIView.animate(withDuration: 1, animations: {
                     self.bottomConstraint.constant += keyboardSize.height
                     self.view.layoutIfNeeded()
+                    self.scrollToLastRow()
                 })
             }
         }
@@ -286,10 +288,10 @@ class MCViewController: UIViewController, UITextFieldDelegate, DZNEmptyDataSetSo
         }
         
         // Encode current user.
-        user?.encodeUser(coder: coder)
+        user?.encode(with: coder)
         
         // Encode current repo.
-        repo?.encodeRepo(coder: coder)
+        repo?.encode(with: coder)
         
         // Encode user firebase reference.
         coder.encode(userRef!.url, forKey: "userRef")
@@ -354,13 +356,13 @@ class MCViewController: UIViewController, UITextFieldDelegate, DZNEmptyDataSetSo
         
         guard self.messages.isEmpty == false else { return }
         let messageData = NSKeyedArchiver.archivedData(withRootObject: self.messages)
-        UserDefaults.standard.set(messageData, forKey: "messages-\(String(describing: repo?.id))")
+        userDefault.set(messageData, forKey: "messages-\(String(describing: repo?.id))")
 
     }
     
     func loadCommitsFromDefaults(userDefault: UserDefaults) -> [Commit] {
         
-        guard let commitData = UserDefaults.standard.object(forKey: "commits-\(String(describing: repo?.id))") as? NSData else { return [] }
+        guard let commitData = userDefault.object(forKey: "commits-\(String(describing: repo?.id))") as? NSData else { return [] }
         guard let commitArray = NSKeyedUnarchiver.unarchiveObject(with: commitData as Data) as? [Commit] else { return [] }
 
         return commitArray
@@ -368,7 +370,7 @@ class MCViewController: UIViewController, UITextFieldDelegate, DZNEmptyDataSetSo
     
     func loadMessagesFromDefaults(userDefault: UserDefaults) -> [Message] {
         
-        guard let messageData = UserDefaults.standard.object(forKey: "messages-\(String(describing: repo?.id))") as? NSData else { print("error 1"); return [] }
+        guard let messageData = userDefault.object(forKey: "messages-\(String(describing: repo?.id))") as? NSData else { return [] }
         guard let messageArray = NSKeyedUnarchiver.unarchiveObject(with: messageData as Data) as? [Message] else { return [] }
         
         return messageArray

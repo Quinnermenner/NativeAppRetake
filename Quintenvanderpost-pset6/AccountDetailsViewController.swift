@@ -297,7 +297,7 @@ class AccountDetailsViewController: UIViewController, UITextFieldDelegate {
         }
         
         // Encode current user.
-        user?.encodeUser(coder: coder)
+        user?.encode(with: coder)
         
         // Encode user firebase reference.
         coder.encode(userRef!.url, forKey: "userRef")
