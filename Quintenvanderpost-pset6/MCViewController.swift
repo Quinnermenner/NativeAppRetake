@@ -47,10 +47,11 @@ class MCViewController: UIViewController, UITextFieldDelegate, DZNEmptyDataSetSo
         
         
         self.title = repo?.name
+        
+        
         DispatchQueue.main.async {
             self.prepareTableView()
         }
-        
         
         // Tapgesture to dismiss keyboard when table is tapped.
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(MCViewController.hideKeyboard))
@@ -65,14 +66,23 @@ class MCViewController: UIViewController, UITextFieldDelegate, DZNEmptyDataSetSo
     override func viewWillAppear(_ animated: Bool) {
         // Allows for constraint update when keyboard shows and hides.
         NotificationCenter.default.addObserver(self, selector: #selector(MCViewController.keyboardWillShow), name: NSNotification.Name.UIKeyboardWillShow, object: nil)
-        
         NotificationCenter.default.addObserver(self, selector: #selector(MCViewController.keyboardWillHide), name: NSNotification.Name.UIKeyboardWillHide, object: nil)
+        
+        let defaults = UserDefaults.standard
+        constructTableFromDefaults(userDefault: defaults)
+        
     }
     
     override func viewWillDisappear(_ animated: Bool) {
         // Dismisses observers to preven weird messages.
         NotificationCenter.default.removeObserver(self, name: NSNotification.Name.UIKeyboardWillShow, object: nil)
         NotificationCenter.default.removeObserver(self, name: NSNotification.Name.UIKeyboardWillHide, object: nil)
+        
+        let defaults = UserDefaults.standard
+        
+        saveCommitsToDefaults(userDefault: defaults)
+        saveMessagesToDefaults(userDefault: defaults)
+       
     }
     
     // MARK: Functions
@@ -93,6 +103,7 @@ class MCViewController: UIViewController, UITextFieldDelegate, DZNEmptyDataSetSo
     
     
     func prepareTableView() {
+        
         
         updateCommits()
         
@@ -122,6 +133,8 @@ class MCViewController: UIViewController, UITextFieldDelegate, DZNEmptyDataSetSo
         })
     }
     
+    // If first time contstructing; scroll to last row.
+    var firstConstruction = true
     func constructTableViewCells(commitList: [Commit], messageList: [Message]) {
         
         tableCellList = [MessageCommitProtocol]()
@@ -136,9 +149,12 @@ class MCViewController: UIViewController, UITextFieldDelegate, DZNEmptyDataSetSo
         
         DispatchQueue.main.async {
             // Done searching and updateing commits and messages.
-            self.searchingCommit = false
             self.tableView.reloadData()
-            self.scrollToLastRow()
+            if self.firstConstruction {
+                self.scrollToLastRow()
+                self.searchingCommit = false
+                self.firstConstruction = false
+            }
         }
         
         
@@ -217,16 +233,17 @@ class MCViewController: UIViewController, UITextFieldDelegate, DZNEmptyDataSetSo
         
         if messageText != "" {
             saveMessage(text: messageText, date: stringFromDate, uid: user!.uid)
+            self.scrollToLastRow()
         }
     }
     
     func keyboardWillShow(notification: NSNotification) {
         if let keyboardSize = (notification.userInfo?[UIKeyboardFrameBeginUserInfoKey] as? NSValue)?.cgRectValue {
             if self.bottomConstraint.constant < keyboardSize.height{
+                
                 UIView.animate(withDuration: 1, animations: {
                     self.bottomConstraint.constant += keyboardSize.height
                     self.view.layoutIfNeeded()
-                    self.scrollToLastRow()
                 })
             }
         }
@@ -322,6 +339,49 @@ class MCViewController: UIViewController, UITextFieldDelegate, DZNEmptyDataSetSo
             attributes: [NSFontAttributeName: UIFont(name: "Georgia", size: 18.0)!,
             NSForegroundColorAttributeName: UIColor.darkGray])
         return emptyText
+    }
+    
+    // MARK: Userdefaults
+    
+    func saveCommitsToDefaults(userDefault: UserDefaults) {
+        
+        guard self.commits.isEmpty == false else { return }
+        let commitData = NSKeyedArchiver.archivedData(withRootObject: self.commits)
+        userDefault.set(commitData, forKey: "commits-\(String(describing: repo?.id))")
+    }
+    
+    func saveMessagesToDefaults(userDefault: UserDefaults) {
+        
+        guard self.messages.isEmpty == false else { return }
+        let messageData = NSKeyedArchiver.archivedData(withRootObject: self.messages)
+        UserDefaults.standard.set(messageData, forKey: "messages-\(String(describing: repo?.id))")
+
+    }
+    
+    func loadCommitsFromDefaults(userDefault: UserDefaults) -> [Commit] {
+        
+        guard let commitData = UserDefaults.standard.object(forKey: "commits-\(String(describing: repo?.id))") as? NSData else { return [] }
+        guard let commitArray = NSKeyedUnarchiver.unarchiveObject(with: commitData as Data) as? [Commit] else { return [] }
+
+        return commitArray
+    }
+    
+    func loadMessagesFromDefaults(userDefault: UserDefaults) -> [Message] {
+        
+        guard let messageData = UserDefaults.standard.object(forKey: "messages-\(String(describing: repo?.id))") as? NSData else { print("error 1"); return [] }
+        guard let messageArray = NSKeyedUnarchiver.unarchiveObject(with: messageData as Data) as? [Message] else { return [] }
+        
+        return messageArray
+    }
+    
+    func constructTableFromDefaults(userDefault: UserDefaults) {
+        
+        let defaultCommits = loadCommitsFromDefaults(userDefault: userDefault)
+        let defaultMessages = loadMessagesFromDefaults(userDefault: userDefault)
+        
+        guard defaultMessages.isEmpty == false || defaultCommits.isEmpty == false else { return }
+        constructTableViewCells(commitList: defaultCommits, messageList: defaultMessages)
+        
     }
 
 }

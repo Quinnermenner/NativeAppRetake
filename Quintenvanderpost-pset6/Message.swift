@@ -9,7 +9,7 @@
 import Foundation
 import Firebase
 
-struct Message: MessageCommitProtocol {
+class Message: NSObject, MessageCommitProtocol, NSCoding {
     
     let text: String
     let date: String
@@ -31,6 +31,16 @@ struct Message: MessageCommitProtocol {
         date = snapshotValue["date"] as! String
     }
     
+    required convenience init(coder: NSCoder) {
+        
+        let author = coder.decodeObject(forKey: "author") as! String
+        let text = coder.decodeObject(forKey: "text") as! String
+        let date = coder.decodeObject(forKey: "date") as! String
+        let key = coder.decodeObject(forKey: "key") as! String
+        
+        self.init(author: author, text: text, date: date, key: key)
+    }
+    
     func toAnyObject() -> Any {
         
         print(author, text, date)
@@ -39,5 +49,13 @@ struct Message: MessageCommitProtocol {
             "text" : text,
             "date" : date
         ]
+    }
+    
+    func encode(with aCoder: NSCoder) {
+        
+        aCoder.encode(author, forKey: "author")
+        aCoder.encode(text, forKey: "text")
+        aCoder.encode(date, forKey: "date")
+        aCoder.encode(key, forKey: "key")
     }
 }
