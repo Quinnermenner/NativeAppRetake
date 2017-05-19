@@ -110,6 +110,7 @@ class MCViewController: UIViewController, UITextFieldDelegate, DZNEmptyDataSetSo
         self.commitRef = self.repo?.ref?.child("commits")
         self.messageRef = self.repo?.ref?.child("messages")
         
+        
         // Listen for new commits and update tableView when necessary.
         self.commitRef?.observe(.value, with: { snapshot in
             var commitList: [Commit] = []
@@ -174,6 +175,7 @@ class MCViewController: UIViewController, UITextFieldDelegate, DZNEmptyDataSetSo
     func updateTableViewCells(commitList: [Commit], messageList: [Message]) {
         
         DispatchQueue.main.async {
+            
             var tempCellList = [MessageCommitProtocol]()
             var deltaCellList = [MessageCommitProtocol]()
             
@@ -191,20 +193,17 @@ class MCViewController: UIViewController, UITextFieldDelegate, DZNEmptyDataSetSo
                     
                     continue
                 } else {
+
                     deltaCellList.append(element)
                 }
             }
             
             // If differences were found; update tableView and relevant data.
             if deltaCellList.count == 1 {
-                self.tableCellList.append(contentsOf: deltaCellList)
                 
-                self.tableView.beginUpdates()
-                self.tableView.insertRows(at: [IndexPath(row: deltaCellList.count - 1, section: 0)], with: .automatic)
-                self.tableView.endUpdates()
-                self.scrollToLastRow()
+                self.insertCell(cellData: deltaCellList)
                 
-            } else {
+            } else if deltaCellList.count > 1 {
                 
                 self.tableCellList = tempCellList.sorted(by: {$0.date < $1.date})
                 self.tableView.reloadData()
@@ -213,10 +212,23 @@ class MCViewController: UIViewController, UITextFieldDelegate, DZNEmptyDataSetSo
         }
     }
     
+    func insertCell(cellData: [MessageCommitProtocol]) {
+        
+        self.tableCellList.append(contentsOf: cellData)
+        DispatchQueue.main.async {
+            
+            self.tableView.beginUpdates()
+            self.tableView.insertRows(at: [IndexPath(row: self.tableCellList.count - 1, section: 0)], with: .automatic)
+            self.tableView.endUpdates()
+            self.scrollToLastRow()
+        }
+    }
+    
     // Focus on bottom cell.
     func scrollToLastRow() {
         
         if self.tableCellList.count > 0 {
+            
             let indexPath = NSIndexPath(row: self.tableCellList.count - 1, section: 0)
                 
             self.tableView.scrollToRow(at: indexPath as IndexPath, at: .bottom, animated: true)
@@ -255,19 +267,24 @@ class MCViewController: UIViewController, UITextFieldDelegate, DZNEmptyDataSetSo
     // Saves a message to the database to present in everyones tableViews.
     func saveMessage(text: String, date: String, uid: String) {
 
-        userRef?.observeSingleEvent(of: .value, with: { (snapshot) in
-            let value = snapshot.value as? NSDictionary
-            let postCount = value?["PostCount"] as? Int ?? 0
-            let userName = value?["Nickname"] as? String ?? ""
-            let messageUID = self.user!.uid + "-" + String(describing: postCount)
-            let message = Message.init(author: userName, text: text, date: date)
-            
-            let uniqueMessageRef = self.messageRef?.child(messageUID)
-            uniqueMessageRef?.setValue(message.toAnyObject())
-            self.userRef?.updateChildValues(["PostCount" : postCount + 1])
-            self.userRef?.child("messages").child(messageUID).setValue(uniqueMessageRef?.url)
-            self.messageTextField.text = ""
-        })
+        DispatchQueue.main.async {
+
+            self.userRef?.observeSingleEvent(of: .value, with: { (snapshot) in
+                let value = snapshot.value as? NSDictionary
+                let postCount = value?["PostCount"] as? Int ?? 0
+                let userName = value?["Nickname"] as? String ?? ""
+                let messageUID = self.user!.uid + "-" + String(describing: postCount)
+                let message = Message.init(author: userName, text: text, date: date)
+                
+                
+                let uniqueMessageRef = self.messageRef?.child(messageUID)
+                uniqueMessageRef?.setValue(message.toAnyObject())
+                self.userRef?.updateChildValues(["PostCount" : postCount + 1])
+                self.userRef?.child("messages").child(messageUID).setValue(uniqueMessageRef?.url)
+                self.messageTextField.text = ""
+                
+            })
+        }
     }
     
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {
@@ -469,7 +486,6 @@ extension MCViewController: UITableViewDataSource, UITableViewDelegate {
         }
         inspect.backgroundColor = UIColor.gray
         
-        
         return [inspect]
     }
     
@@ -498,12 +514,8 @@ extension MCViewController: UITableViewDataSource, UITableViewDelegate {
             
             let cell: UITableViewCell = UITableViewCell(style: UITableViewCellStyle.default, reuseIdentifier: "ErrorCell")
             return cell
-        
         }
-        
-        
     }
-    
 }
 
 

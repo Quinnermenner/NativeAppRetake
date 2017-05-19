@@ -36,6 +36,7 @@ class LoginController: UIViewController, UITextFieldDelegate  {
         FIRAuth.auth()?.addStateDidChangeListener() { auth, user in
             if user != nil && self.navigationController?.visibleViewController == self {
                 print("Found a login!")
+                self.user = User(authData: user!)
                 self.performSegue(withIdentifier: "segueLogin", sender: nil)
             }
         }
