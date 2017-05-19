@@ -285,15 +285,22 @@ class MCViewController: UIViewController, UITextFieldDelegate, DZNEmptyDataSetSo
                 else { self.network.alert(viewController: self); return }
             
             let messageUID = self.user!.uid + "-" + String(describing: postCount)
-            let message = Message.init(author: userName, text: text, date: date)
+            let message = Message.init(author: userName, text: text, date: date, key: messageUID)
             
-            // Update database with message.
-            let uniqueMessageRef = self.messageRef?.child(messageUID)
-            uniqueMessageRef?.setValue(message.toAnyObject())
+            self.nsQueue.sync {
+                self.messages.append(message)
+                self.insertCell(cellData: message)
+            }
             
-            // Increase users post count.
-            self.userRef?.updateChildValues(["PostCount" : postCount + 1])
-            self.userRef?.child("messages").child(messageUID).setValue(uniqueMessageRef?.url)
+            self.nsQueue.sync {
+                // Update database with message.
+                let uniqueMessageRef = self.messageRef?.child(messageUID)
+                uniqueMessageRef?.setValue(message.toAnyObject())
+                
+                // Increase users post count.
+                self.userRef?.updateChildValues(["PostCount" : postCount + 1])
+                self.userRef?.child("messages").child(messageUID).setValue(uniqueMessageRef?.url)
+            }
             self.messageTextField.text = ""
             
         })

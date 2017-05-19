@@ -162,7 +162,7 @@ class RepoController: UITableViewController, DZNEmptyDataSetSource, DZNEmptyData
             guard gitOwner.text != nil, gitRepo.text != nil else { return }
 
             // Attempts to save repository.
-            guard self.saveRepo(owner: gitOwner.text!, repository: gitRepo.text!)
+            guard self.saveRepo(owner: gitOwner.text!, repository: gitRepo.text!) == true
                 else { self.present(notFoundAlert, animated: true, completion: nil); return }
             
         }
