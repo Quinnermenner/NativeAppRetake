@@ -142,44 +142,53 @@ class AccountDetailsViewController: UIViewController, UITextFieldDelegate {
         case 1:
             self.newPassword.becomeFirstResponder()
         case 2:
-            self.updatePassword(newPassword: self.activeTextField.text!)
+            self.updatePassword()
         default:
             print("Implement more cases!!")
         }
     }
     
-    func updatePassword(newPassword: String) {
+    func updatePassword() {
         
         if network.test() {
+            
             let curPassword = self.currentPassword.text!
+            let newPassword = self.activeTextField.text!
+            
             if newPassword != "" {
-                if reauthUser(curPassword: curPassword) {
+                
+                reauthUser(curPassword: curPassword) { success in
                     
-                    FIRAuth.auth()?.currentUser?.updatePassword(newPassword) { (error) in
-                        print("Could not update password")
-                    }
-                    self.newPassword.text = ""
-                    self.currentPassword.text = ""
-                    self.activeTextField.resignFirstResponder()
-                } else {
-                    
-                    // Alert when reauthentication fails.
-                    let alert = UIAlertController(title: "Oops!",
-                                                  message: "Incorrect password.",
-                                                  preferredStyle: .alert)
-                    alert.addAction(UIAlertAction(title: "Continue", style: .default) {_ in
+                    if success {
                         
-                        self.currentPassword.becomeFirstResponder()
-                        self.newPassword.text = newPassword
-                    })
+                        // Attempt to set password in database.
+                        self.setPassword(newPassword: newPassword, curPassword: curPassword)
+                    }
+                    else {
                     
-                    self.present(alert,animated: true, completion: nil)
+                        // Alert when reauthentication fails.
+                        let alert = UIAlertController(title: "Oops!",
+                                                      message: "Incorrect password.",
+                                                      preferredStyle: .alert)
+                        
+                        // Dismiss alert and focus on current password textField.
+                        alert.addAction(UIAlertAction(title: "Continue", style: .default) {_ in
+                            
+                            self.currentPassword.becomeFirstResponder()
+                            self.newPassword.text = newPassword
+                        })
+                        
+                        self.present(alert,animated: true, completion: nil)
+                    }
                 }
             } else {
-                // Alert when new password cannot be set.
+                
+                // Alert that empty passwords are not allowed.
                 let alert = UIAlertController(title: "Oops!",
-                                              message: "That password is not allowed.",
+                                              message: "Cannot set empty passwords!",
                                               preferredStyle: .alert)
+                
+                // Allow for retyping new password
                 alert.addAction(UIAlertAction(title: "Continue", style: .default) {_ in
                     self.newPassword.becomeFirstResponder()
                     self.currentPassword.text = curPassword
@@ -189,49 +198,84 @@ class AccountDetailsViewController: UIViewController, UITextFieldDelegate {
         } else { network.alert(viewController: self) }
     }
     
-    func reauthUser(curPassword: String) -> Bool {
+    func setPassword(newPassword: String, curPassword: String) {
         
-        let curUser = FIRAuth.auth()?.currentUser
-        var credential: FIRAuthCredential
-        
-        credential = FIREmailPasswordAuthProvider.credential(withEmail: user!.email, password: curPassword)
-        var success = false
-        curUser?.reauthenticate(with: credential) { error in
-            if let error = error {
-                print(error)
-            } else {
-                success = true
+        FIRAuth.auth()?.currentUser?.updatePassword(newPassword) { (error) in
+            if error != nil {
+                
+                // Alert when new password cannot be set.
+                let alert = UIAlertController(title: "Oops!",
+                                              message: "Could not set that password.",
+                                              preferredStyle: .alert)
+                
+                // Allow for retyping new password.
+                alert.addAction(UIAlertAction(title: "Continue", style: .default) {_ in
+                    self.newPassword.becomeFirstResponder()
+                    self.currentPassword.text = curPassword
+                })
+                self.present(alert,animated: true, completion: nil)
             }
         }
-        return success
+        
+        // Congratulate on updating password.
+        let alert = UIAlertController(title: "Succes!",
+                                      message: "Your password has been updated.",
+                                      preferredStyle: .alert)
+        
+        // Tidy up view after updating.
+        alert.addAction(UIAlertAction(title: "Continue", style: .default) {_ in
+            
+            // Empty out the textFields
+            self.newPassword.text = ""
+            self.currentPassword.text = ""
+            self.activeTextField.resignFirstResponder()
+        })
+        self.present(alert,animated: true, completion: nil)
+    }
+    
+    // Reauthenticate user with completionhandler.
+    func reauthUser(curPassword: String, completionHandler: @escaping (Bool) -> ()) {
+        
+        // Construct current user details.
+        let curUser = FIRAuth.auth()?.currentUser
+        let credential = FIREmailPasswordAuthProvider.credential(withEmail: user!.email, password: curPassword)
+        
+        // Attempt reauthentication and tell update process to handle success.
+        curUser?.reauthenticate(with: credential) { error in
+            if error != nil {
+                
+                completionHandler(false)
+            } else {
+                
+                completionHandler(true)
+            }
+        }
     }
     
     func updateNickname(newNickname: String) {
         
         self.nicknameText = newNickname
-        DispatchQueue.main.async {
+        
+        self.userRef?.child("Nickname").setValue(newNickname)
+        
+        self.userRef?.observeSingleEvent(of: .value, with: { (snapshot) in
             
-            self.userRef?.child("Nickname").setValue(newNickname)
-            
-            self.userRef?.observeSingleEvent(of: .value, with: { (snapshot) in
-                
-                // Get user value
-                let value = snapshot.value as? NSDictionary
-                let nick = value?["Nickname"] as? String ?? self.nicknameText
-                if let messages = value?["messages"] as? NSDictionary {
-                    for (_, messageRef) in messages {
-                        
-                        let ref = FIRDatabase.database().reference(fromURL: String(describing: messageRef))
-                        ref.child("author").setValue(nick)
-                    }
+            // Set nickname to all messages posted by user in every repository.
+            let value = snapshot.value as? NSDictionary
+            let nick = value?["Nickname"] as? String ?? self.nicknameText
+            if let messages = value?["messages"] as? NSDictionary {
+                for (_, messageRef) in messages {
+                    
+                    let ref = FIRDatabase.database().reference(fromURL: String(describing: messageRef))
+                    ref.child("author").setValue(nick)
                 }
-                
-            }) { (error) in
-                let alert = UIAlertController(title: "Oops!", message: "Could not update your nickname. Please contact your database manager.", preferredStyle: .alert)
-                alert.addAction(UIAlertAction(title: "Continue", style: .default))
-                self.present(alert,animated: true, completion: nil)
-                print(error.localizedDescription)
             }
+            
+        }) { (error) in
+            let alert = UIAlertController(title: "Oops!", message: "Could not update your nickname. Please contact your database manager.", preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: "Continue", style: .default))
+            self.present(alert,animated: true, completion: nil)
+            print(error.localizedDescription)
         }
     }
     
