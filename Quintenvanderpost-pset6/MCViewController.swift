@@ -16,6 +16,8 @@ class MCViewController: UIViewController, UITextFieldDelegate, DZNEmptyDataSetSo
     
     // Mark: Constants
     let network = reachabilityTest.sharedInstance
+    let nsQueue = DispatchQueue(label: "inserQueue")
+    
     
     // MARK: Initializers
     var repo: Repo?
@@ -48,10 +50,13 @@ class MCViewController: UIViewController, UITextFieldDelegate, DZNEmptyDataSetSo
         
         self.title = repo?.name
         
+        self.commitRef = self.repo?.ref?.child("commits")
+        self.messageRef = self.repo?.ref?.child("messages")
         
-        DispatchQueue.main.async {
-            self.prepareTableView()
-        }
+        
+        self.prepareTableView()
+        
+        self.prepareListeners()
         
         // Tapgesture to dismiss keyboard when table is tapped.
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(MCViewController.hideKeyboard))
@@ -68,20 +73,12 @@ class MCViewController: UIViewController, UITextFieldDelegate, DZNEmptyDataSetSo
         NotificationCenter.default.addObserver(self, selector: #selector(MCViewController.keyboardWillShow), name: NSNotification.Name.UIKeyboardWillShow, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(MCViewController.keyboardWillHide), name: NSNotification.Name.UIKeyboardWillHide, object: nil)
         
-        let defaults = UserDefaults.standard
-        constructTableFromDefaults(userDefault: defaults)
-        
     }
     
     override func viewWillDisappear(_ animated: Bool) {
         // Dismisses observers to preven weird messages.
         NotificationCenter.default.removeObserver(self, name: NSNotification.Name.UIKeyboardWillShow, object: nil)
         NotificationCenter.default.removeObserver(self, name: NSNotification.Name.UIKeyboardWillHide, object: nil)
-        
-        let defaults = UserDefaults.standard
-        
-        saveCommitsToDefaults(userDefault: defaults)
-        saveMessagesToDefaults(userDefault: defaults)
        
     }
     
@@ -98,7 +95,6 @@ class MCViewController: UIViewController, UITextFieldDelegate, DZNEmptyDataSetSo
         } catch {
             return [:] as JSON
         }
-
     }
     
     
@@ -107,131 +103,109 @@ class MCViewController: UIViewController, UITextFieldDelegate, DZNEmptyDataSetSo
         
         self.updateCommits()
         
-        self.commitRef = self.repo?.ref?.child("commits")
-        self.messageRef = self.repo?.ref?.child("messages")
-        
-        
-        // Listen for new commits and update tableView when necessary.
-        self.commitRef?.observe(.value, with: { snapshot in
+        // Get all commits and messages currently in the database.
+        self.commitRef?.observeSingleEvent(of: .value, with: { (snapshot) in
+            
             var commitList: [Commit] = []
             for item in snapshot.children {
                 let commit = Commit(snapshot: item as! FIRDataSnapshot)
                 commitList.append(commit)
             }
+            
             self.commits = commitList
             
-            // Either construct the tableView or update it if it already exists.
-            if self.tableCellList.isEmpty {
+            // Construct tableview sequentially.
+            self.nsQueue.sync {
                 self.constructTableViewCells(commitList: self.commits, messageList: self.messages)
             }
-            else {
-                self.updateTableViewCells(commitList: self.commits, messageList: self.messages)
-            }
-            
         })
         
         // Listen for new messages and update tableView whe nnecessary.
-        self.messageRef?.observe(.value, with: { (snapshot) in
+        self.messageRef?.observeSingleEvent(of: .value, with: { (snapshot) in
             var messageList : [Message] = []
             for item in snapshot.children {
                 let message = Message.init(snapshot: item as! FIRDataSnapshot)
                 messageList.append(message)
             }
+            
             self.messages = messageList
-
-            // Either construct the tableView or update it if it already exists.
-            if self.tableCellList.isEmpty {
+            
+            // Construct tableview sequentially.
+            self.nsQueue.sync {
                 self.constructTableViewCells(commitList: self.commits, messageList: self.messages)
-            }
-            else {
-                self.updateTableViewCells(commitList: self.commits, messageList: self.messages)
             }
         })
         
     }
     
-    func constructTableViewCells(commitList: [Commit], messageList: [Message]) {
+    func prepareListeners() {
         
-        DispatchQueue.main.async {
-        
-            self.tableCellList = [MessageCommitProtocol]()
-            for commit in commitList {
-                self.tableCellList.append(commit)
-            }
-            for message in messageList {
-                self.tableCellList.append(message)
-            }
-            // Sort cells by creation date.
-            self.tableCellList = self.tableCellList.sorted(by: {$0.date < $1.date})
-        
-       
-            // Done searching and updateing commits and messages.
-            self.tableView.reloadData()
-            self.scrollToLastRow()
-            self.searchingCommit = false
-        }
-    }
-    
-    func updateTableViewCells(commitList: [Commit], messageList: [Message]) {
-        
-        DispatchQueue.main.async {
+        // Listen for new commits and update tableView when necessary.
+        self.commitRef?.observe(.childAdded, with: { snapshot in
             
-            var tempCellList = [MessageCommitProtocol]()
-            var deltaCellList = [MessageCommitProtocol]()
-            
-            // Fill the latest CellList
-            for commit in commitList {
-                tempCellList.append(commit)
-            }
-            for message in messageList {
-                tempCellList.append(message)
-            }
-            
-            // Check for differnces with current CellList
-            for element in tempCellList {
-                if self.tableCellList.contains(where: { $0.key == element.key }) {
-                    
-                    continue
-                } else {
+            let commit = Commit.init(snapshot: snapshot)
+            if self.commits.contains(where: { $0.key == commit.key }) == false {
 
-                    deltaCellList.append(element)
+                self.commits.append(commit)
+                self.nsQueue.sync {
+                    self.insertCell(cellData: commit)
                 }
             }
+           
+        })
+        
+        // Listen for new messages and update tableView when necessary.
+        self.messageRef?.observe(.childAdded, with: { (snapshot) in
             
-            // If differences were found; update tableView and relevant data.
-            if deltaCellList.count == 1 {
-                
-                self.insertCell(cellData: deltaCellList)
-                
-            } else if deltaCellList.count > 1 {
-                
-                self.tableCellList = tempCellList.sorted(by: {$0.date < $1.date})
-                self.tableView.reloadData()
-                self.scrollToLastRow()
+            let message = Message.init(snapshot: snapshot)
+            if self.messages.contains(where: { $0.key == message.key }) == false {
+
+                self.messages.append(message)
+                self.nsQueue.sync {
+                    self.insertCell(cellData: message)
+                }
             }
-        }
+        })
     }
     
-    func insertCell(cellData: [MessageCommitProtocol]) {
+    func constructTableViewCells(commitList: [Commit], messageList: [Message]) {
         
-        self.tableCellList.append(contentsOf: cellData)
-        DispatchQueue.main.async {
-            
-            self.tableView.beginUpdates()
-            self.tableView.insertRows(at: [IndexPath(row: self.tableCellList.count - 1, section: 0)], with: .automatic)
-            self.tableView.endUpdates()
-            self.scrollToLastRow()
+        self.tableCellList = [MessageCommitProtocol]()
+        for commit in commitList {
+            self.tableCellList.append(commit)
         }
+        for message in messageList {
+            self.tableCellList.append(message)
+        }
+        
+        // Sort cells by creation date.
+        self.tableCellList = self.tableCellList.sorted(by: {$0.date < $1.date})
+    
+        // Done searching and updateing commits and messages.
+        self.tableView.reloadData()
+        self.scrollToLastRow()
+        self.searchingCommit = false
+    }
+    
+    // Insert a message or commit into the tableView.
+    func insertCell(cellData: MessageCommitProtocol) {
+
+        self.tableCellList.append(cellData)
+        self.tableView.beginUpdates()
+        self.tableView.insertRows(at: [IndexPath(row: self.tableCellList.count - 1, section: 0)], with: .automatic)
+        self.tableView.endUpdates()
+        self.scrollToLastRow()
     }
     
     // Focus on bottom cell.
     func scrollToLastRow() {
         
-        if self.tableCellList.count > 0 {
+        let numberOfRows = self.tableView.numberOfRows(inSection: 0)
+        
+        if numberOfRows > 0 {
             
-            let indexPath = NSIndexPath(row: self.tableCellList.count - 1, section: 0)
-                
-            self.tableView.scrollToRow(at: indexPath as IndexPath, at: .bottom, animated: true)
+            let indexPath = IndexPath(row: numberOfRows - 1, section: 0)
+            self.tableView.scrollToRow(at: indexPath, at: .bottom, animated: true)
         }
     }
     
@@ -246,7 +220,10 @@ class MCViewController: UIViewController, UITextFieldDelegate, DZNEmptyDataSetSo
         DispatchQueue.main.async {
             if self.network.test() {
                 
+                // Get commits as JSON object.
                 let commitJsons = self.gitCommit(owner: self.repo?.owner, repoName: self.repo?.name)
+                
+                // Construct commits from JSON object.
                 for (_, subJson):(String, JSON) in commitJsons {
                     let author = subJson["commit"]["committer"]["name"].stringValue
                     let date = subJson["commit"]["committer"]["date"].stringValue
@@ -254,6 +231,8 @@ class MCViewController: UIViewController, UITextFieldDelegate, DZNEmptyDataSetSo
                     let sha = subJson["sha"].stringValue
                     
                     let commit = Commit(author: author, message: message, sha: sha, date: date)
+                    
+                    // Update database with only new entries.
                     self.commitRef?.child(sha).observeSingleEvent(of: .value, with: { (snapshot) in
                         if snapshot.exists() == false {
                             self.commitRef?.updateChildValues([sha : commit.toAnyObject()])
@@ -261,29 +240,6 @@ class MCViewController: UIViewController, UITextFieldDelegate, DZNEmptyDataSetSo
                     })
                 }
             } else { self.network.alert(viewController: self) }
-        }
-    }
-    
-    // Saves a message to the database to present in everyones tableViews.
-    func saveMessage(text: String, date: String, uid: String) {
-
-        DispatchQueue.main.async {
-
-            self.userRef?.observeSingleEvent(of: .value, with: { (snapshot) in
-                let value = snapshot.value as? NSDictionary
-                let postCount = value?["PostCount"] as? Int ?? 0
-                let userName = value?["Nickname"] as? String ?? ""
-                let messageUID = self.user!.uid + "-" + String(describing: postCount)
-                let message = Message.init(author: userName, text: text, date: date)
-                
-                
-                let uniqueMessageRef = self.messageRef?.child(messageUID)
-                uniqueMessageRef?.setValue(message.toAnyObject())
-                self.userRef?.updateChildValues(["PostCount" : postCount + 1])
-                self.userRef?.child("messages").child(messageUID).setValue(uniqueMessageRef?.url)
-                self.messageTextField.text = ""
-                
-            })
         }
     }
     
@@ -300,13 +256,47 @@ class MCViewController: UIViewController, UITextFieldDelegate, DZNEmptyDataSetSo
     
     func postMessage() {
         
-        let stringFromDate = Date().iso8601    // "2017-03-22T13:22:13.933Z"
-        let messageText = messageTextField.text!
-        
-        if messageText != "" {
-            saveMessage(text: messageText, date: stringFromDate, uid: user!.uid)
+        if network.test() {
+            let stringFromDate = Date().iso8601    // "2017-03-22T13:22:13.933Z"
+            let messageText = messageTextField.text!
             
+            if messageText != "" {
+                saveMessage(text: messageText, date: stringFromDate, uid: user!.uid)
+                
+            }
+        } else {
+            
+            network.alert(viewController: self)
         }
+    }
+    
+    // Saves a message to the database to present in everyones tableView.
+    func saveMessage(text: String, date: String, uid: String) {
+        
+        
+        self.userRef?.observeSingleEvent(of: .value, with: { (snapshot) in
+            
+            // Get relevant information to construct a message.
+            let value = snapshot.value as? NSDictionary
+            
+            // Make sure that dat was actually received.
+            guard let postCount = value?["PostCount"] as? Int,
+                let userName = value?["Nickname"] as? String
+                else { self.network.alert(viewController: self); return }
+            
+            let messageUID = self.user!.uid + "-" + String(describing: postCount)
+            let message = Message.init(author: userName, text: text, date: date)
+            
+            // Update database with message.
+            let uniqueMessageRef = self.messageRef?.child(messageUID)
+            uniqueMessageRef?.setValue(message.toAnyObject())
+            
+            // Increase users post count.
+            self.userRef?.updateChildValues(["PostCount" : postCount + 1])
+            self.userRef?.child("messages").child(messageUID).setValue(uniqueMessageRef?.url)
+            self.messageTextField.text = ""
+            
+        })
     }
     
     func keyboardWillShow(notification: NSNotification) {
@@ -333,7 +323,7 @@ class MCViewController: UIViewController, UITextFieldDelegate, DZNEmptyDataSetSo
         }
     }
     
-    // Shows the commit details in a safari inapp browser view.
+    // Shows the commit details in a safari browser view.
     func showCommit(_ index: Int) {
         
         if network.test() {
@@ -354,15 +344,17 @@ class MCViewController: UIViewController, UITextFieldDelegate, DZNEmptyDataSetSo
     }
     
     override func encodeRestorableState(with coder: NSCoder) {
+        
+        // Remeber message field if not empty.
         if messageTextField.text != "" {
             coder.encode(messageTextField.text, forKey: "messageText")
         }
         
         // Encode current user.
-        user?.encode(with: coder)
+        user!.encode(with: coder)
         
         // Encode current repo.
-        repo?.encode(with: coder)
+        repo!.encode(with: coder)
         
         // Encode user firebase reference.
         coder.encode(userRef!.url, forKey: "userRef")
@@ -371,11 +363,13 @@ class MCViewController: UIViewController, UITextFieldDelegate, DZNEmptyDataSetSo
     }
     
     override func decodeRestorableState(with coder: NSCoder) {
-        // Decode message text
-        let saveMessageText = coder.decodeObject(forKey: "messageText") as? String
         
-        // Restore message.
-        messageTextField.text = saveMessageText
+        // Decode message text
+        if let saveMessageText = coder.decodeObject(forKey: "messageText") as? String {
+        
+            // Restore message.
+            messageTextField.text = saveMessageText
+        }
         
         // Restore repository.
         repo = Repo.init(coder: coder)
@@ -401,60 +395,20 @@ class MCViewController: UIViewController, UITextFieldDelegate, DZNEmptyDataSetSo
     
     // Shows a nice text for empty tableViews.
     func title(forEmptyDataSet scrollView: UIScrollView!) -> NSAttributedString! {
+        
         var text: String = ""
+        // If still looking for commits inform user; else print that it's empty.
         if self.searchingCommit {
+            
             text = "Searching for commits.."
         } else {
+            
             text = "This repository has no commits!"
         }
-        let emptyText = NSMutableAttributedString(
-            string: text,
-            attributes: [NSFontAttributeName: UIFont(name: "Georgia", size: 18.0)!,
-            NSForegroundColorAttributeName: UIColor.darkGray])
+        
+        let emptyText = NSMutableAttributedString(string: text, attributes: [NSFontAttributeName: UIFont(name: "Georgia", size: 18.0)!, NSForegroundColorAttributeName: UIColor.darkGray])
+        
         return emptyText
-    }
-    
-    // MARK: Userdefaults
-    
-    func saveCommitsToDefaults(userDefault: UserDefaults) {
-        
-        guard self.commits.isEmpty == false else { return }
-        let commitData = NSKeyedArchiver.archivedData(withRootObject: self.commits)
-        userDefault.set(commitData, forKey: "commits-\(String(describing: repo?.id))")
-    }
-    
-    func saveMessagesToDefaults(userDefault: UserDefaults) {
-        
-        guard self.messages.isEmpty == false else { return }
-        let messageData = NSKeyedArchiver.archivedData(withRootObject: self.messages)
-        userDefault.set(messageData, forKey: "messages-\(String(describing: repo?.id))")
-
-    }
-    
-    func loadCommitsFromDefaults(userDefault: UserDefaults) -> [Commit] {
-        
-        guard let commitData = userDefault.object(forKey: "commits-\(String(describing: repo?.id))") as? NSData else { return [] }
-        guard let commitArray = NSKeyedUnarchiver.unarchiveObject(with: commitData as Data) as? [Commit] else { return [] }
-
-        return commitArray
-    }
-    
-    func loadMessagesFromDefaults(userDefault: UserDefaults) -> [Message] {
-        
-        guard let messageData = userDefault.object(forKey: "messages-\(String(describing: repo?.id))") as? NSData else { return [] }
-        guard let messageArray = NSKeyedUnarchiver.unarchiveObject(with: messageData as Data) as? [Message] else { return [] }
-        
-        return messageArray
-    }
-    
-    func constructTableFromDefaults(userDefault: UserDefaults) {
-        
-        let defaultCommits = loadCommitsFromDefaults(userDefault: userDefault)
-        let defaultMessages = loadMessagesFromDefaults(userDefault: userDefault)
-        
-        guard defaultMessages.isEmpty == false || defaultCommits.isEmpty == false else { return }
-        constructTableViewCells(commitList: defaultCommits, messageList: defaultMessages)
-        
     }
 
 }

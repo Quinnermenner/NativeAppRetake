@@ -26,20 +26,12 @@ class LoginController: UIViewController, UITextFieldDelegate  {
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        // Set delegates and tags.
         loginPass.delegate = self
         loginPass.tag = 0
         
         loginEmail.delegate = self
         loginEmail.tag = 1
-        
-        // Listener that segues to repos if user is already logged in.
-        FIRAuth.auth()?.addStateDidChangeListener() { auth, user in
-            if user != nil && self.navigationController?.visibleViewController == self {
-                print("Found a login!")
-                self.user = User(authData: user!)
-                self.performSegue(withIdentifier: "segueLogin", sender: nil)
-            }
-        }
         
     }
     
@@ -48,6 +40,7 @@ class LoginController: UIViewController, UITextFieldDelegate  {
         
         // Hide the navigation bar on the this view controller
         self.navigationController?.setNavigationBarHidden(true, animated: animated)
+        
     }
     
     override func viewWillDisappear(_ animated: Bool) {
@@ -76,6 +69,7 @@ class LoginController: UIViewController, UITextFieldDelegate  {
     
     func registerUser(email: String, password: String) {
         
+        // Create user in database.
         FIRAuth.auth()!.createUser(withEmail: email, password: password) { user, error in
             if error == nil {
                 let ref : FIRDatabaseReference!
@@ -85,8 +79,11 @@ class LoginController: UIViewController, UITextFieldDelegate  {
                     "Nickname": email,
                     "Repos": [],
                     "PostCount": 0])
+                
+                // Perfrom login after sing up.
                 self.loginUser(login: email, password: password)
             } else {
+                
                 let alert = UIAlertController(title: "Oops!",
                                               message: "These credentials are not allowed.",
                                               preferredStyle: .alert)
@@ -162,26 +159,5 @@ class LoginController: UIViewController, UITextFieldDelegate  {
                 }
             }
         }
-    }
-    
-    override func encodeRestorableState(with coder: NSCoder) {
-        
-        // Encode current user.
-        if user != nil {
-            user?.encode(with: coder)
-        }
-        
-        
-        super.encodeRestorableState(with: coder)
-    }
-    
-    override func decodeRestorableState(with coder: NSCoder) {
-        
-        // Restore user.
-        if let _ = coder.decodeObject(forKey: "userEmail") {
-            user = User.init(coder: coder)
-        }
-        
-        super.decodeRestorableState(with: coder)
     }
 }

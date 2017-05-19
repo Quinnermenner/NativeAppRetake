@@ -86,18 +86,6 @@ class RepoController: UITableViewController, DZNEmptyDataSetSource, DZNEmptyData
         tableView.estimatedRowHeight = 60
     }
     
-    override func viewWillAppear(_ animated: Bool) {
-        
-        let defaults = UserDefaults.standard
-        self.repos = loadReposFromDefaults(userDefault: defaults)
-    }
-    
-    override func viewWillDisappear(_ animated: Bool) {
-        
-        let defaults = UserDefaults.standard
-        saveReposToDefaults(userDefault: defaults)
-    }
-    
     // Mark: Functions
     
     func gitRepoSearch(owner: String, name: String) -> JSON {
@@ -144,7 +132,7 @@ class RepoController: UITableViewController, DZNEmptyDataSetSource, DZNEmptyData
                 // Update users saved repos.
                 self.userRef.child("savedRepos/\(stringID)").setValue(true)
             })
-        } else { network.alert(viewController: self) }
+        } else { network.alert(viewController: self); return false }
         
         return true
     }
@@ -173,9 +161,9 @@ class RepoController: UITableViewController, DZNEmptyDataSetSource, DZNEmptyData
         let saveAction = UIAlertAction(title: "Add", style: .default) { _ in
             guard gitOwner.text != nil, gitRepo.text != nil else { return }
 
-            if self.saveRepo(owner: gitOwner.text!, repository: gitRepo.text!) == false {
-                self.present(notFoundAlert, animated: true, completion: nil)
-            }
+            // Attempts to save repository.
+            guard self.saveRepo(owner: gitOwner.text!, repository: gitRepo.text!)
+                else { self.present(notFoundAlert, animated: true, completion: nil); return }
             
         }
         
@@ -202,7 +190,13 @@ class RepoController: UITableViewController, DZNEmptyDataSetSource, DZNEmptyData
 
     @IBAction func logoutDidTouch(_ sender: AnyObject) {
         
+        self.logoutUser()
+    }
+    
+    func logoutUser() {
+        
         do {
+            
             try FIRAuth.auth()!.signOut()
             performSegue(withIdentifier: "segueToLoginController", sender: nil)
         } catch {
@@ -212,14 +206,8 @@ class RepoController: UITableViewController, DZNEmptyDataSetSource, DZNEmptyData
                                               preferredStyle: .alert)
                 alert.addAction(UIAlertAction(title: "Continue", style: .default))
                 self.present(alert,animated: true, completion: nil)
-            } else { performSegue(withIdentifier: "segueToLoginController", sender: nil) }
+            } else { return }
         }
-    }
-    
-    func logoutUser() {
-        
-        try! FIRAuth.auth()!.signOut()
-        performSegue(withIdentifier: "segueToLoginController", sender: nil)
     }
     
     
@@ -235,16 +223,18 @@ class RepoController: UITableViewController, DZNEmptyDataSetSource, DZNEmptyData
             case "Logout":
                 self?.logoutUser()
             default:
-                print("Err don't get this")
+                print("Not implemented")
             }
-            
         }
     }
     
     func showDropdown() {
+        
         if (self.menu?.isDescendant(of: self.view) == true) {
+            
             self.menu?.hideMenu()
         } else {
+            
             self.menu?.showMenuFromView(self.view)
         }
     }
@@ -316,24 +306,6 @@ class RepoController: UITableViewController, DZNEmptyDataSetSource, DZNEmptyData
         return cell
     }
     
-    // MARK: Userdefaults
-    
-    func saveReposToDefaults(userDefault: UserDefaults) {
-        
-        guard self.repos.isEmpty == false else { return }
-        let repoData = NSKeyedArchiver.archivedData(withRootObject: self.repos)
-        userDefault.set(repoData, forKey: "repos/\(user.uid)")
-    }
-    
-    func loadReposFromDefaults(userDefault: UserDefaults) -> [Repo] {
-
-        guard let repoData = UserDefaults.standard.object(forKey: "repos/\(user.uid)") as? NSData else { return [] }
-        guard let repoArray = NSKeyedUnarchiver.unarchiveObject(with: repoData as Data) as? [Repo] else { return [] }
-        return repoArray
-    }
-    
-
-    
     // Override to support conditional editing of the table view.
     override func tableView(_ tableView: UITableView, canEditRowAt indexPath: IndexPath) -> Bool {
         return true
@@ -346,12 +318,11 @@ class RepoController: UITableViewController, DZNEmptyDataSetSource, DZNEmptyData
             let repo = repos[indexPath.row]
             let repoID = repo.id
             DispatchQueue.main.async {
+                
                 self.repos.remove(at: indexPath.row)
                 self.repoTable.reloadData()
                 self.userRef.child("savedRepos/\(repoID)").setValue(false)
             }
-            
-            
         }
     }
     

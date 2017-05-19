@@ -19,7 +19,10 @@ class reachabilityTest {
     
     private init () {
         
+        // Setup gloal observer.
         NotificationCenter.default.addObserver(self, selector: #selector(reachabilityChanged),name: ReachabilityChangedNotification,object: reachability)
+        
+        // Setup corresponding notifier.
         do {
             try reachability.startNotifier()
         } catch {
@@ -47,6 +50,7 @@ class reachabilityTest {
         return self.online
     }
     
+    // Global alert for broken connection.
     func alert(viewController: UIViewController) {
         
         let alert = UIAlertController(title: "Oops!",
