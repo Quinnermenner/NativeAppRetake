@@ -9,6 +9,7 @@
 import Foundation
 import Firebase
 
+// General user class.
 class User: NSObject, NSCoding {
     
     let uid: String

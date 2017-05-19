@@ -9,6 +9,7 @@
 import Foundation
 import Firebase
 
+// A message class that contains information for the messages in the database and tableViews.
 class Message: NSObject, MessageCommitProtocol, NSCoding {
     
     let text: String

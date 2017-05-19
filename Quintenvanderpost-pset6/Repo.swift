@@ -9,6 +9,7 @@
 import Foundation
 import Firebase
 
+// A repository class that contains all relevant information about repositories for the database and tableViews.
 class Repo: NSObject, NSCoding{
     
     let key: String

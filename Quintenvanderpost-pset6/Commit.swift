@@ -9,6 +9,7 @@
 import Foundation
 import Firebase
 
+// A commit class that contains information for the git commits in the database and tableViews.
 class Commit: NSObject, MessageCommitProtocol, NSCoding {
     let key: String
     let author: String
